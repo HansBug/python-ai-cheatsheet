@@ -81,7 +81,7 @@ python-ai-cheatsheet/
 
 * [ ] Transformer 基础
   * [x] [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)
-  * [ ] Positional Encoding / RoPE
+  * [x] [Positional Encoding / RoPE](algos/positional_encoding/README.md)
   * [ ] LayerNorm / RMSNorm
 * [ ] LLM 机制与工程
   * [ ] KV Cache
@@ -164,7 +164,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md) 专题。后续会继续补 Transformer / LLM 的高频基础模块和模型家族精读。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md) 和 [Positional Encoding / RoPE](algos/positional_encoding/README.md) 两个专题。后续会继续补 Transformer / LLM 的高频基础模块和模型家族精读。
 
 ## 许可证
 

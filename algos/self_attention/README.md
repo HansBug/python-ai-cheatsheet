@@ -58,37 +58,35 @@ X: [seq_len, d_model]
 
 先线性映射得到：
 
-```text
-Q = X W_Q
-K = X W_K
-V = X W_V
-```
+$$
+Q = XW_Q,\quad K = XW_K,\quad V = XW_V
+$$
 
 然后做四步：
 
-1. 计算相似度分数：`QK^T`
-2. 缩放：除以 `sqrt(d_k)`
-3. 归一化：做 `softmax`
-4. 加权求和：用注意力权重乘 `V`
+1. 计算相似度分数：$QK^\top$
+2. 缩放：除以 $\sqrt{d_k}$
+3. 归一化：做 $\operatorname{softmax}$
+4. 加权求和：用注意力权重乘 $V$
 
 公式是：
 
-```text
-Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) V
-```
+$$
+\operatorname{Attention}(Q, K, V)=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
+$$
 
 ### 4. 为什么要除以 `sqrt(d_k)`？
 
 这是经典高频题。
 
-如果 `d_k` 很大，`QK^T` 的数值会变大，softmax 容易变得特别尖锐：
+如果 $d_k$ 很大，$QK^\top$ 的数值会变大，softmax 容易变得特别尖锐：
 
 - 最大项接近 1
 - 其他项接近 0
 
 这会导致梯度不稳定，训练变差。
 
-所以除以 `sqrt(d_k)` 的核心目的就是：
+所以除以 $\sqrt{d_k}$ 的核心目的就是：
 
 > 控制分数尺度，避免 softmax 过早饱和。
 
@@ -111,10 +109,13 @@ Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) V
 
 公式是：
 
-```text
-head_i = Attention(Q_i, K_i, V_i)
-MultiHead(Q, K, V) = Concat(head_1, ..., head_h) W_O
-```
+$$
+\operatorname{head}_i=\operatorname{Attention}(Q_i, K_i, V_i)
+$$
+
+$$
+\operatorname{MultiHead}(Q, K, V)=\operatorname{Concat}(\operatorname{head}_1,\ldots,\operatorname{head}_h)W_O
+$$
 
 ### 6. 形状怎么记？
 
@@ -160,11 +161,11 @@ attention output : [B, H, T, head_dim]
 
 核心瓶颈是注意力分数矩阵：
 
-```text
-QK^T -> [T, T]
-```
+$$
+QK^\top \in \mathbb{R}^{T \times T}
+$$
 
-所以时间复杂度和显存复杂度通常都与 `T^2` 相关。
+所以时间复杂度和显存复杂度通常都与 $T^2$ 相关。
 
 这是它长序列昂贵的根本原因。
 
@@ -341,7 +342,7 @@ FlashAttention 的核心是更高效地做分块计算和 IO 优化。
 
 ### 2. 忘了缩放
 
-手写时最容易把 `/ sqrt(d_k)` 漏掉。
+手写时最容易把 $\frac{1}{\sqrt{d_k}}$ 漏掉。
 
 ### 3. 把 softmax 维度写错
 
@@ -372,7 +373,7 @@ softmax 应该沿着“我要关注哪些 token”这个维度做，也就是最
 
 一个简洁版本可以直接背：
 
-> Self-Attention 的本质，是让每个 token 用自己的 query 去和所有 token 的 key 做匹配，得到注意力权重后，再对所有 value 做加权汇总。Multi-Head Attention 则是在多个子空间里并行做这件事，让模型能同时捕捉不同类型的依赖关系。它的优点是全局建模和并行性强，缺点是注意力矩阵带来 `O(T^2)` 的时间和显存开销。
+> Self-Attention 的本质，是让每个 token 用自己的 query 去和所有 token 的 key 做匹配，得到注意力权重后，再对所有 value 做加权汇总。Multi-Head Attention 则是在多个子空间里并行做这件事，让模型能同时捕捉不同类型的依赖关系。它的优点是全局建模和并行性强，缺点是注意力矩阵带来 $O(T^2)$ 的时间和显存开销。
 
 ## 延伸阅读
 
