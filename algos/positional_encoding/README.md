@@ -19,7 +19,7 @@
 Self-Attention 会计算：
 
 $$
-\operatorname{Attention}(Q, K, V)=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
+\mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
 $$
 
 这里本质上只关心向量之间的匹配程度。

@@ -107,6 +107,7 @@ algos/llm/
 - 每个专题都要有一个“最小实现”锚点
 - 如果一个结论依赖特定前提，必须写清楚前提
 - 代码示例要足够短，能用于现场讲解
+- 如果使用 LaTeX 公式，按 GitHub Markdown 兼容性来写；不要使用 `\operatorname`，优先使用 `\mathrm` 或更基础的写法
 
 ## 根 README.md 维护要求
 

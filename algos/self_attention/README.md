@@ -66,13 +66,13 @@ $$
 
 1. 计算相似度分数：$QK^\top$
 2. 缩放：除以 $\sqrt{d_k}$
-3. 归一化：做 $\operatorname{softmax}$
+3. 归一化：做 $\mathrm{softmax}$
 4. 加权求和：用注意力权重乘 $V$
 
 公式是：
 
 $$
-\operatorname{Attention}(Q, K, V)=\operatorname{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
+\mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
 $$
 
 ### 4. 为什么要除以 `sqrt(d_k)`？
@@ -110,11 +110,11 @@ $$
 公式是：
 
 $$
-\operatorname{head}_i=\operatorname{Attention}(Q_i, K_i, V_i)
+\mathrm{head}_i=\mathrm{Attention}(Q_i, K_i, V_i)
 $$
 
 $$
-\operatorname{MultiHead}(Q, K, V)=\operatorname{Concat}(\operatorname{head}_1,\ldots,\operatorname{head}_h)W_O
+\mathrm{MultiHead}(Q, K, V)=\mathrm{Concat}(\mathrm{head}_1,\ldots,\mathrm{head}_h)W_O
 $$
 
 ### 6. 形状怎么记？
