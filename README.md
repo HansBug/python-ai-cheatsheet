@@ -80,7 +80,7 @@ python-ai-cheatsheet/
 > 当前仓库骨架已搭好，后续会按“AI 面试高频 + 可追问 + 可手写”的标准逐步补齐。
 
 * [ ] Transformer 与 LLM
-  * [ ] Self-Attention / Multi-Head Attention
+  * [x] [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)
   * [ ] Positional Encoding / RoPE
   * [ ] LayerNorm / RMSNorm
   * [ ] KV Cache
@@ -163,7 +163,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并补了 `algos/llm/` 的专题骨架。后续会优先补 LLM 主流开源模型家族精读，再逐步填充其他算法方向内容。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md) 专题。后续会继续补 Transformer / LLM 的高频基础模块和模型家族精读。
 
 ## 许可证
 
