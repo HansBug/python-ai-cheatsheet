@@ -86,9 +86,10 @@ python-ai-cheatsheet/
   * [ ] KV Cache
   * [ ] MoE
   * [ ] 主流开源 LLM 家族精读
-    * [ ] 每个主流开源模型家族单独整理 paper reading
-    * [ ] 只有技术报告、没有正式论文的模型也单独整理技术报告精读
-    * [ ] 覆盖架构改动、训练配方、上下文长度、对齐方式、推理优化与典型追问
+    * [ ] GPT 系列（GPT-1 到 GPT-3.5，作为现代 LLM 起源线）
+    * [ ] LLaMA 系列
+    * [ ] Qwen 系列
+    * [ ] DeepSeek 系列
 * [ ] 训练机制与优化
   * [ ] Cross Entropy / Label Smoothing
   * [ ] Adam / AdamW
