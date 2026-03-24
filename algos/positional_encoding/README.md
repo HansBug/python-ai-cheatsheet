@@ -102,6 +102,42 @@ RoPE 全称 Rotary Position Embedding。
 
 > 在 attention 前，对 `Q` 和 `K` 的每一对相邻维度做一个与位置相关的旋转。
 
+如果看单个位置 $pos$、单个频率对 $j$，RoPE 可以写成：
+
+$$
+\theta_j = pos \cdot 10000^{-2j/d}
+$$
+
+$$
+\begin{bmatrix}
+x'_{2j} \\
+x'_{2j+1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\cos \theta_j & -\sin \theta_j \\
+\sin \theta_j & \cos \theta_j
+\end{bmatrix}
+\begin{bmatrix}
+x_{2j} \\
+x_{2j+1}
+\end{bmatrix}
+$$
+
+也就是把第 $2j$ 维和第 $2j+1$ 维看成一个二维向量，然后按位置相关的角度做旋转。
+
+展开后就是：
+
+$$
+x'_{2j}=x_{2j}\cos\theta_j-x_{2j+1}\sin\theta_j
+$$
+
+$$
+x'_{2j+1}=x_{2j}\sin\theta_j+x_{2j+1}\cos\theta_j
+$$
+
+这也是为什么代码实现里，RoPE 往往都是“偶数维和奇数维成对处理”。
+
 这会带来一个很重要的性质：
 
 > $Q$ 和 $K$ 做内积时，结果天然带上相对位置信息。
