@@ -20,6 +20,52 @@
 
 > 这是一个最小版的 Encoder-Decoder Transformer，保留了原始论文的主干结构，但把实现压到适合面试讲解和手动阅读的程度。
 
+## 结构图
+
+先看整体，再看局部，会更容易理解。
+
+### 1. 完整 Transformer 总览
+
+![Transformer encoder-decoder architecture](https://jalammar.github.io/images/xlnet/transformer-encoder-decoder.png)
+
+这张图最重要的是让你先建立一个总印象：
+
+- 左边是 encoder stack
+- 右边是 decoder stack
+- encoder 输出会传给 decoder 做 cross-attention
+
+### 2. Encoder Block 结构图
+
+![Transformer encoder block](https://jalammar.github.io/images/xlnet/transformer-encoder-block-2.png)
+
+encoder block 比较干净，只有两层主干：
+
+- self-attention
+- feed forward network
+
+### 3. Decoder Block 结构图
+
+![Transformer decoder block](https://jalammar.github.io/images/t/Transformer_decoder.png)
+
+decoder 比 encoder 多出来的关键，就是中间那层 encoder-decoder attention，也就是 cross-attention。
+
+### 4. Decoder-Only 结构图
+
+![Transformer decoder-only block](https://jalammar.github.io/images/xlnet/transformer-decoder-intro.png)
+
+这张图适合拿来和 GPT 一类模型对应起来看：
+
+- 只有 decoder stack
+- 没有 encoder
+- 只有 masked self-attention 和 FFN
+
+图片来源：
+
+- Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)
+- Jay Alammar, [The Illustrated GPT-2](https://jalammar.github.io/illustrated-gpt2/)
+
+这些图在理解结构上很好用，但面试时你不能只会认图，还得能讲清楚 encoder 和 decoder 各自负责什么。
+
 ## 核心机制
 
 ### 1. 完整 Transformer 的数据流是什么？
@@ -134,6 +180,126 @@ $$
 
 因为这个专题的目标是“讲清结构”，不是“模拟生产训练代码”。
 
+### 7. Encoder 和 Decoder 分别起什么作用？
+
+可以先用一句话记：
+
+- encoder：把输入序列编码成上下文化表示
+- decoder：在生成输出时，一边看已经生成的前缀，一边读取 encoder 提供的输入信息
+
+更具体一点：
+
+#### encoder 在做什么？
+
+encoder 的任务是“理解输入”。
+
+它读完整个 source sequence，然后把每个位置编码成带上下文的信息表示。输出通常叫：
+
+$$
+E \in \mathbb{R}^{B \times T_{\text{src}} \times D}
+$$
+
+这组表示的特点是：
+
+- 每个 token 都能双向看完整输入
+- 更适合理解、匹配、分类、检索
+
+所以 encoder 更像一个“读懂输入的表征器”。
+
+#### decoder 在做什么？
+
+decoder 的任务是“按顺序生成输出”。
+
+它在第 $t$ 步只能看：
+
+- 已经生成的前 $t-1$ 个 token
+- encoder 输出的 source 表示
+
+所以 decoder 更像一个“条件生成器”。
+
+如果是翻译场景，可以把它理解成：
+
+- encoder 先把法语句子读懂
+- decoder 再一个词一个词生成英语句子
+
+### 8. 为什么有时候 encoder 和 decoder 两个都要？
+
+因为有些任务天然就是：
+
+> 先读一个输入，再生成另一个输出
+
+典型就是 seq2seq：
+
+- 机器翻译
+- 文本摘要
+- 语音识别转文本
+- OCR / 图像描述这类“输入一种序列，输出另一种序列”
+
+这种任务里，source 和 target 的角色不同：
+
+- source 需要被完整理解
+- target 需要被自回归生成
+
+所以 encoder-decoder 很自然。
+
+### 9. 为什么有时候只需要 encoder？
+
+因为有些任务不需要“生成”，只需要“理解”。
+
+比如：
+
+- 文本分类
+- 句子匹配
+- 命名实体识别
+- 检索表征
+- 许多判别式任务
+
+这类任务的核心是把输入编码成一个好的表示，然后接分类头或任务头即可。
+
+所以只保留 encoder 就够了。
+
+一个典型例子是：
+
+- BERT：encoder-only
+
+它更擅长做理解型任务，而不是直接做开放式逐 token 生成。
+
+### 10. 为什么有时候只需要 decoder-only？
+
+因为有些任务的核心目标就是：
+
+> 给定前文，继续往后生成
+
+比如：
+
+- 语言建模
+- 对话生成
+- 代码补全
+- 通用大语言模型
+
+这类任务本质上都可以写成 next-token prediction。
+
+所以只要保留 decoder，并给 self-attention 加 causal mask，就能做自回归生成。
+
+典型例子是：
+
+- GPT 系列
+- LLaMA
+- Qwen
+- DeepSeek-V2/V3 这类主流 LLM
+
+### 11. 三种结构该怎么一眼区分？
+
+最简单的判断方式是看任务目标。
+
+- encoder-only：理解输入，不负责开放式生成
+- encoder-decoder：读一个序列，再生成另一个序列
+- decoder-only：根据前缀持续生成后续 token
+
+如果面试官追问“为什么现代 LLM 大多是 decoder-only”，一个常见回答是：
+
+> 因为通用语言模型训练目标通常就是 next-token prediction，decoder-only 结构最直接，扩展到大规模预训练也最自然。
+
 ## 面试高频问题
 
 ### 1. 原始 Transformer 和现代 LLM 的结构一样吗？
@@ -173,6 +339,14 @@ $$
 ### 7. 这个实现的复杂度瓶颈在哪？
 
 attention 仍然是主要瓶颈，尤其是序列长度上的 $O(T^2)$ 开销。
+
+### 8. encoder-only、encoder-decoder、decoder-only 该怎么选？
+
+按任务目标选：
+
+- 理解任务优先：encoder-only
+- 条件生成任务优先：encoder-decoder
+- 开放式自回归生成优先：decoder-only
 
 ## 最小实现
 
