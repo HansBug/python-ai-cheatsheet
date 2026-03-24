@@ -79,12 +79,16 @@ python-ai-cheatsheet/
 
 > 当前仓库骨架已搭好，后续会按“AI 面试高频 + 可追问 + 可手写”的标准逐步补齐。
 
-* [ ] Transformer 与 LLM 基础
+* [ ] Transformer 与 LLM
   * [ ] Self-Attention / Multi-Head Attention
   * [ ] Positional Encoding / RoPE
   * [ ] LayerNorm / RMSNorm
   * [ ] KV Cache
   * [ ] MoE
+  * [ ] 主流开源 LLM 家族精读
+    * [ ] 每个主流开源模型家族单独整理 paper reading
+    * [ ] 只有技术报告、没有正式论文的模型也单独整理技术报告精读
+    * [ ] 覆盖架构改动、训练配方、上下文长度、对齐方式、推理优化与典型追问
 * [ ] 训练机制与优化
   * [ ] Cross Entropy / Label Smoothing
   * [ ] Adam / AdamW
@@ -158,7 +162,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前先完成仓库基础骨架、文档规范和协作说明，`algos/` 与 `tools/` 目录暂时只保留占位文件，后续再逐步填充具体算法方向内容。
+目前已完成仓库基础骨架、文档规范和协作说明，并补了 `algos/llm/` 的专题骨架。后续会优先补 LLM 主流开源模型家族精读，再逐步填充其他算法方向内容。
 
 ## 许可证
 
