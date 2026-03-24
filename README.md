@@ -1,0 +1,165 @@
+# Python AI 算法岗面试速查手册
+
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/status-WIP-orange.svg)](#)
+
+> 专为 AI 算法岗面试准备的资料库：覆盖核心算法原理、最小实现、训练推导与现场手撕代码
+
+## 这是什么？
+
+这是一个专注于**AI 算法工程岗面试**的 Python 速查仓库。这里说的“算法”不是刷题里的哈希表、线段树那种题型模板，而是更偏：
+
+- LLM / Transformer
+- RL / PPO / DPO
+- CV / Detection / Segmentation / Diffusion
+- CUDA / 算子 / 推理优化
+- 训练稳定性、并行策略、评测与工程落地
+
+这个仓库的目标不是堆概念，而是整理一套在面试里真正有用的资料组织方式：
+
+- **核心原理讲清楚**：知道模块为什么这样设计，而不是只会背结论
+- **最小代码能手写**：关键模块要能在现场写出一个简化版实现
+- **训练与推理问题能展开**：不仅会讲结构，还能讲复杂度、显存、稳定性和工程 trade-off
+- **面试表达导向**：内容组织会更接近“怎么讲给面试官听”，而不是教材式展开
+- **高频主题优先**：先收录 AI 算法岗最常见、最容易被追问的方向
+
+## 适合谁？
+
+### 你应该来看这个库，如果你：
+
+- 已经有 Python 和机器学习基础
+- 正在准备 AI 算法岗、LLM 算法岗、CV 算法岗、推荐/强化学习算法岗面试
+- 看过论文、做过项目，但高频基础问题答得还不够体系化
+- 知道 Transformer / PPO / CNN / CUDA 这些名词，但现场很难讲透或手写
+- 想把“会用”升级成“会讲、会推、会改、会写简化实现”
+
+### 你不应该只看这个库，如果你：
+
+- 还没有 Python、PyTorch、线性代数、概率统计的基础
+- 还没系统学过深度学习和机器学习
+- 当前更需要的是从零入门模型、训练和推理基础
+
+如果你属于上面这类情况，建议先补：
+
+- Python 基础：[Python 官方教程](https://docs.python.org/zh-cn/3/tutorial/)
+- 深度学习基础：[Dive into Deep Learning](https://zh.d2l.ai/)
+- PyTorch 基础：[PyTorch 官方文档](https://pytorch.org/docs/stable/index.html)
+- Transformer 基础：[The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)
+
+## 核心原则
+
+1. **先讲清，再展开，再深入**
+   先把核心机制说明白，再补公式、复杂度和工程细节。
+
+2. **最小实现必须可手写**
+   注意力、LayerNorm、RoPE、PPO loss 这类高频模块，应该至少能写出简化版。
+
+3. **默认同时覆盖原理与工程**
+   每份内容都尽量回答：原理是什么、训练时会遇到什么、线上部署时要注意什么。
+
+4. **大厂面试高频优先于百科全书**
+   不追求一次收全所有方向，优先收录最容易被问、最容易被追问的内容。
+
+## 仓库结构
+
+```text
+python-ai-cheatsheet/
+├── algos/              # 算法方向专题内容
+├── tools/              # 本地辅助脚本、实验脚本、可视化脚本
+├── README.md           # 项目说明
+├── CLAUDE.md           # AI 协作与内容维护规范
+├── AGENTS.md           # 指向 CLAUDE.md 的软链接
+├── requirements.txt    # 本地实验依赖
+├── .gitignore
+└── LICENSE
+```
+
+## 计划收录的内容
+
+> 当前仓库骨架已搭好，后续会按“AI 面试高频 + 可追问 + 可手写”的标准逐步补齐。
+
+* [ ] Transformer 与 LLM 基础
+  * [ ] Self-Attention / Multi-Head Attention
+  * [ ] Positional Encoding / RoPE
+  * [ ] LayerNorm / RMSNorm
+  * [ ] KV Cache
+  * [ ] MoE
+* [ ] 训练机制与优化
+  * [ ] Cross Entropy / Label Smoothing
+  * [ ] Adam / AdamW
+  * [ ] Learning Rate Scheduler
+  * [ ] Gradient Clipping
+  * [ ] Mixed Precision
+* [ ] 对齐与强化学习
+  * [ ] PPO
+  * [ ] DPO
+  * [ ] GRPO
+  * [ ] Reward Model
+  * [ ] Advantage Estimation
+* [ ] CV 高频专题
+  * [ ] CNN 基础模块
+  * [ ] ResNet
+  * [ ] Vision Transformer
+  * [ ] Detection Head
+  * [ ] Diffusion 基础
+* [ ] CUDA 与算子优化
+  * [ ] CUDA 内存模型
+  * [ ] 常见 kernel 优化思路
+  * [ ] Flash Attention 思路
+  * [ ] Triton 入门
+  * [ ] PyTorch 自定义算子
+* [ ] 分布式训练
+  * [ ] Data Parallel
+  * [ ] Tensor Parallel
+  * [ ] Pipeline Parallel
+  * [ ] ZeRO
+  * [ ] Checkpointing
+* [ ] 推理与部署
+  * [ ] Quantization
+  * [ ] Speculative Decoding
+  * [ ] Serving 架构基础
+  * [ ] Batch / Latency / Throughput trade-off
+  * [ ] 常见线上问题排查
+* [ ] 面试现场手撕专题
+  * [ ] 手写 Attention
+  * [ ] 手写 LayerNorm
+  * [ ] 手写 RoPE
+  * [ ] 手写 PPO Loss
+  * [ ] 手写 NMS / IoU
+* [ ] 面试高频追问
+  * [ ] 为什么 AdamW 要解耦 weight decay
+  * [ ] 为什么 Pre-LN 更稳
+  * [ ] PPO 为什么需要 clip
+  * [ ] Flash Attention 为什么省显存
+  * [ ] KV Cache 为什么能提速
+
+## 使用方式
+
+1. 先看某个专题的 `README.md`，理解它解决什么问题、为什么这样写。
+2. 再看最小实现，确认自己能不看提示写出核心部分。
+3. 对着模块训练口头表达：输入输出、公式、复杂度、优缺点、适用场景。
+4. 针对训练与推理两个维度，补齐常见追问。
+5. 如果是 CUDA / 算子类内容，再额外补内存访问、并行粒度和性能瓶颈分析。
+
+## 依赖说明
+
+本仓库中的代码会按主题选择合适依赖：
+
+- `numpy` 用于数值推导和最小实现
+- `torch` 用于模型模块、训练逻辑和算子实验
+- `matplotlib` 用于可视化和解释性图示
+
+默认原则是：
+
+- 原理解释尽量独立于具体框架
+- 最小实现优先使用 `numpy` / `torch`
+- 如果某部分天然依赖 CUDA / Triton / C++ 扩展，会明确标注
+
+## 当前状态
+
+目前先完成仓库基础骨架、文档规范和协作说明，`algos/` 与 `tools/` 目录暂时只保留占位文件，后续再逐步填充具体算法方向内容。
+
+## 许可证
+
+本项目采用 [Apache 2.0](LICENSE) 许可证。
