@@ -91,6 +91,19 @@ class AlexNetStem(nn.Module):
         return self.net(x)
 
 
+class ZFNetStem(nn.Module):
+    def __init__(self, in_channels: int = 3, out_channels: int = 64) -> None:
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=7, stride=2, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
+
+
 class VGGBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, num_convs: int) -> None:
         super().__init__()
@@ -165,14 +178,17 @@ def main() -> None:
 
     images = torch.randn(2, 3, 64, 64)
     alex_stem = AlexNetStem()
+    zf_stem = ZFNetStem()
     vgg_block = VGGBlock(in_channels=64, out_channels=128, num_convs=2)
     inception = InceptionBlock(in_channels=128, out_channels=128)
 
     stem_out = alex_stem(images)
+    zf_out = zf_stem(images)
     vgg_out = vgg_block(stem_out)
     inception_out = inception(vgg_out)
 
     print("AlexNet stem output shape:", tuple(stem_out.shape))
+    print("ZFNet stem output shape:", tuple(zf_out.shape))
     print("VGG block output shape:", tuple(vgg_out.shape))
     print("Inception block output shape:", tuple(inception_out.shape))
 
