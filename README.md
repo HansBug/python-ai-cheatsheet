@@ -83,6 +83,7 @@ python-ai-cheatsheet/
   * [x] [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)
   * [x] [Positional Encoding / RoPE](algos/positional_encoding/README.md)
   * [x] [LayerNorm / RMSNorm](algos/normalization/README.md)
+  * [x] [Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)
   * [x] [最小完整 Transformer 实现](algos/transformer_minimal/README.md)
 * [ ] LLM 机制与工程
   * [ ] KV Cache
@@ -165,7 +166,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md) 和 [最小完整 Transformer 实现](algos/transformer_minimal/README.md) 四个专题。后续会继续补 Transformer / LLM 的高频基础模块和模型家族精读。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md) 和 [最小完整 Transformer 实现](algos/transformer_minimal/README.md) 五个专题。后续会继续补 Transformer / LLM 的高频基础模块和模型家族精读。
 
 ## 许可证
 
