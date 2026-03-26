@@ -27,6 +27,20 @@ PPO 的全称是 Proximal Policy Optimization。
 
 $$ \nabla_\theta J(\theta) = \mathbb{E}[\nabla_\theta \log \pi_\theta(a_t \mid s_t) \cdot A_t] $$
 
+这里每个符号的意思要能拆开说：
+
+- $J(\theta)$：策略优化目标，也就是我们想让它变大的东西
+- $\nabla_\theta J(\theta)$：目标对参数 $\theta$ 的梯度
+- $\pi_\theta(a_t \mid s_t)$：在状态 $s_t$ 下，策略给动作 $a_t$ 的概率
+- $\log \pi_\theta(a_t \mid s_t)$：对数概率，便于求导和数值处理
+- $A_t$：这个动作在当前状态下的 advantage
+- $\mathbb{E}[\cdot]$：对采样到的数据求平均
+
+直觉上看，这个式子在说：
+
+- 如果某个动作的 $A_t$ 是正的，就提高它的概率
+- 如果某个动作的 $A_t$ 是负的，就降低它的概率
+
 问题是，直接按这个方向猛走，很容易出现：
 
 - 新旧策略差太大
@@ -47,17 +61,41 @@ $$ L^{\mathrm{CLIP}}(\theta) = \mathbb{E}\left[\min\left(r_t(\theta) A_t,\ \math
 
 $$ r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\mathrm{old}}}(a_t \mid s_t)} $$
 
+这里每个符号最好也当场解释：
+
+- $L^{\mathrm{CLIP}}(\theta)$：PPO 的 clip 策略目标
+- $r_t(\theta)$：新旧策略对同一个动作的概率比
+- $\theta_{\mathrm{old}}$：采样这批数据时使用的旧策略参数
+- $\epsilon$：clip 范围，比如常见的 `0.2`
+- $\mathrm{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)$：把概率比限制在可接受区间里
+
 这里最值得你现场解释的是：
 
 - `ratio` 表示新策略相对旧策略，把当前动作概率放大了多少
 - 如果 `ratio` 偏离 1 太多，就会被 clip 回来
 - `min(...)` 的作用是防止目标被“虚高”的更新方向利用
 
+可以举个很直观的数值例子：
+
+- 旧策略下，动作 `right` 的概率是 `0.50`
+- 新策略下，动作 `right` 的概率被拉到 `0.80`
+- 那么 $r_t(\theta) = 0.80 / 0.50 = 1.6$
+- 如果 $\epsilon = 0.2$，那可接受区间就是 `[0.8, 1.2]`
+- 这时 `1.6` 会被裁成 `1.2`
+
+这就是 PPO 在工程上很重要的一点：它不让策略一次更新跨太大步。
+
 ### 3. advantage 为什么在 PPO 里这么重要？
 
 PPO 不是直接拿 return 去推策略，而是更偏向使用 advantage：
 
 $$ A_t = Q(s_t, a_t) - V(s_t) $$
+
+这里：
+
+- $Q(s_t, a_t)$：当前状态下执行当前动作的价值
+- $V(s_t)$：当前状态本身的平均价值
+- $A_t$：两者相减，得到“这个动作相对平均水平多好”
 
 直觉上它在问：
 
