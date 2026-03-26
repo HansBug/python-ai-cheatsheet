@@ -30,6 +30,26 @@
 
 这时用类来表达会更自然。
 
+如果先从代码看，一个最小的抽象接口可以长这样：
+
+```cpp
+class TensorOp {
+public:
+    virtual ~TensorOp() = default;
+    virtual void apply(std::vector<float>& values) const = 0;
+    virtual std::string name() const = 0;
+};
+```
+
+这几行代码本身就对应了面向对象里最重要的几个概念：
+
+- `class TensorOp`：把“算子”抽象成一个对象，而不是散落的函数
+- `apply(...)`：定义统一行为接口，表示“这个算子能作用在一组数据上”
+- `name()`：给外部系统一个统一查询元信息的入口
+- `= 0`：把它声明成纯虚函数，说明这里只定义接口，不给默认实现
+
+所以这里的类不是为了“语法上像 C++”，而是为了把“统一接口 + 不同实现”这件事表达清楚。
+
 ### 2. 什么是继承？
 
 继承的核心是：
@@ -42,6 +62,39 @@
 - 不同数据增强策略
 - 不同调度器 / 策略类
 
+如果继续对着代码看，继承就是让具体子类接到这个抽象接口下面：
+
+```cpp
+class ScaleOp : public TensorOp {
+public:
+    explicit ScaleOp(float scale) : scale_(scale) {}
+
+    void apply(std::vector<float>& values) const override {
+        for (float& value : values) {
+            value *= scale_;
+        }
+    }
+
+    std::string name() const override {
+        return "ScaleOp";
+    }
+
+private:
+    float scale_;
+};
+```
+
+这里最该结合代码点出来的是：
+
+- `public TensorOp`：说明 `ScaleOp` 是一个 `TensorOp`，也就是它遵守这套统一接口
+- `explicit ScaleOp(float scale)`：构造函数把这个算子的内部状态 `scale_` 绑定进对象
+- `apply(...) const override`：真正给出具体实现，这就是“接口不变、实现可替换”
+- `private: float scale_`：把状态封装在对象内部，而不是暴露给外部随便改
+
+所以继承在这里的价值，不是单纯复用代码，而是：
+
+> 让调用方只依赖 `TensorOp` 接口，而不用关心后面到底是 `ScaleOp` 还是别的实现。
+
 ### 3. 什么是多态？
 
 最常问的是运行时多态，也就是：
@@ -53,6 +106,29 @@
 
 如果没有 `virtual`，通过基类接口调用时就不会发生动态分派。
 
+真正体现“多态”的，不是子类定义本身，而是这种调用方式：
+
+```cpp
+std::vector<std::unique_ptr<TensorOp>> pipeline;
+pipeline.emplace_back(std::make_unique<ScaleOp>(2.0f));
+pipeline.emplace_back(std::make_unique<BiasOp>(1.5f));
+
+for (const auto& op : pipeline) {
+    std::cout << "running " << op->name() << '\n';
+    op->apply(values);
+}
+```
+
+这里必须结合代码讲：
+
+- `std::unique_ptr<TensorOp>`：容器里存的是基类指针，不是具体子类类型
+- `make_unique<ScaleOp>(...)` / `make_unique<BiasOp>(...)`：实际塞进去的是不同子类对象
+- `op->name()` / `op->apply(values)`：调用发生在基类接口上，但真正执行的是各自子类实现
+
+这就是运行时多态最典型的样子：
+
+> 同一段调用代码，不需要写 `if op_type == ...`，也不需要知道真实子类类型，只通过统一接口就能调到正确实现。
+
 ### 4. 为什么析构函数常常也要 `virtual`？
 
 这是高频坑点。
@@ -60,6 +136,14 @@
 如果你通过基类指针删除子类对象，而基类析构函数不是虚的，就可能只执行到基类析构，导致资源释放不完整。
 
 所以只要这个类打算被当成多态基类使用，析构函数通常就应该是 `virtual`。
+
+对应到前面的代码，就是这一行：
+
+```cpp
+virtual ~TensorOp() = default;
+```
+
+这行很多人会漏，但它不是可有可无的小细节，而是多态基类的安全前提。
 
 ### 5. AI / Python 相关代码里，多态一般用在哪？
 
@@ -94,43 +178,17 @@
 
 ## 最小实现
 
-下面这个最小例子模拟“统一算子接口 + 不同实现”：
+这篇最适合对着看的代码锚点其实已经在上面的主讲解里给出来了：
 
-```cpp
-class TensorOp {
-public:
-    virtual ~TensorOp() = default;
-    virtual void apply(std::vector<float>& values) const = 0;
-    virtual std::string name() const = 0;
-};
+- 抽象基类 `TensorOp`
+- 具体子类 `ScaleOp`
+- 多态调用容器 `std::vector<std::unique_ptr<TensorOp>>`
 
-class ScaleOp : public TensorOp {
-public:
-    explicit ScaleOp(float scale) : scale_(scale) {}
+建议阅读顺序是：
 
-    void apply(std::vector<float>& values) const override {
-        for (float& value : values) {
-            value *= scale_;
-        }
-    }
-
-    std::string name() const override {
-        return "ScaleOp";
-    }
-
-private:
-    float scale_;
-};
-```
-
-这里最值得你讲的几件事：
-
-- `TensorOp`：抽象基类，定义统一接口
-- `virtual ~TensorOp() = default;`：保证通过基类指针销毁对象时安全
-- `apply(...) const = 0`：纯虚函数，说明这个类本身不提供默认实现
-- `override`：显式声明子类重写，避免签名写错
-
-配套代码还补了一个 `BiasOp`，再通过 `std::vector<std::unique_ptr<TensorOp>>` 统一执行。
+1. 先看 `TensorOp`，理解接口和虚析构
+2. 再看 `ScaleOp` / `BiasOp`，理解继承和重写
+3. 最后看 `pipeline` 那段调用，理解多态真正发生在哪里
 
 完整代码见：[minimal.cpp](minimal.cpp)
 

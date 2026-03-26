@@ -6,7 +6,9 @@
 
 class TensorOp {
 public:
+    // 多态基类必须有虚析构，保证通过基类指针释放子类对象时安全。
     virtual ~TensorOp() = default;
+    // 统一算子接口：不同子类都要实现如何修改一组值。
     virtual void apply(std::vector<float>& values) const = 0;
     virtual std::string name() const = 0;
 };
@@ -49,6 +51,7 @@ private:
 
 int main() {
     std::vector<float> values{1.0f, 2.0f, 3.0f};
+    // 容器里存基类指针，而不是具体实现类型，这样调用方只依赖统一接口。
     std::vector<std::unique_ptr<TensorOp>> pipeline;
     pipeline.emplace_back(std::make_unique<ScaleOp>(2.0f));
     pipeline.emplace_back(std::make_unique<BiasOp>(1.5f));
