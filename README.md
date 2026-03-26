@@ -106,8 +106,8 @@ python-ai-cheatsheet/
   * [ ] Reward Model
   * [ ] Advantage Estimation
 * [ ] CV 高频专题
-  * [ ] CNN 基础模块
-  * [ ] ResNet
+  * [x] [CNN 基础模块](algos/cnn_basics/README.md)
+  * [x] [ResNet](algos/resnet/README.md)
   * [x] [Vision Transformer](algos/vision_transformer/README.md)
     * [ ] ViT
     * [ ] DeiT
@@ -172,7 +172,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md) 和 [Vision Transformer](algos/vision_transformer/README.md) 六个专题。后续会继续补 Transformer / LLM 的高频基础模块、CV 高频模块和模型家族精读。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md) 和 [Vision Transformer](algos/vision_transformer/README.md) 八个专题。后续会继续补 Transformer / LLM 的高频基础模块、CV 高频模块和模型家族精读。
 
 ## 许可证
 
