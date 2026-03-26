@@ -109,6 +109,12 @@ python-ai-cheatsheet/
   * [ ] CNN 基础模块
   * [ ] ResNet
   * [x] [Vision Transformer](algos/vision_transformer/README.md)
+    * [ ] ViT
+    * [ ] DeiT
+    * [ ] Swin Transformer
+    * [ ] MetaFormer / PoolFormer
+    * [ ] ConvNeXt
+    * [ ] EVA / EVA-02
   * [ ] Detection Head
   * [ ] Diffusion 基础
 * [ ] CUDA 与算子优化
