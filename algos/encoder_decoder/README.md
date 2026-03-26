@@ -113,6 +113,54 @@ $$
 
 - $Q, K, V$ 都来自同一份 encoder 输入
 
+如果对着最小实现看，`EncoderLayer` 就是这件事的直接代码化：
+
+```python
+class EncoderLayer(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff):
+        super().__init__()
+        self.self_attn = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=num_heads,
+            batch_first=True,
+        )
+        self.ffn = FeedForward(d_model, d_ff)
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+
+    def forward(self, x, src_key_padding_mask=None):
+        attn_out, _ = self.self_attn(
+            x,
+            x,
+            x,
+            key_padding_mask=src_key_padding_mask,
+            need_weights=False,
+        )
+        x = self.norm1(x + attn_out)
+        x = self.norm2(x + self.ffn(x))
+        return x
+```
+
+这里每一部分都对应一个明确作用：
+
+- `self.self_attn`：做 multi-head self-attention。因为传进去的是 `x, x, x`，所以 `Q / K / V` 都来自 encoder 当前输入。
+- `self.ffn`：做逐位置的非线性变换。attention 负责“和别的位置交换信息”，FFN 负责“每个位置自己做特征变换”。
+- `self.norm1` / `self.norm2`：分别放在 attention 子层和 FFN 子层后面，配合 residual 稳定训练、控制特征尺度。
+- `src_key_padding_mask`：告诉 attention 哪些 source 位置是 padding，避免模型把补齐位也当成有效上下文。
+
+再按 `forward` 逐行看：
+
+- `attn_out, _ = self.self_attn(x, x, x, ...)`：每个 source token 都去看整段 source，拿回一份融合上下文后的表示。
+- `x = self.norm1(x + attn_out)`：残差分支保留原始输入，attention 分支补充上下文信息，再做归一化。
+- `x = self.norm2(x + self.ffn(x))`：在已经完成上下文交互的表示上，再做一层逐位置 MLP 变换。
+- `return x`：输出仍然是和输入同形状的 hidden states，但每个位置都已经带上更强的上下文信息。
+
+所以如果你只看代码，也可以把 encoder layer 记成：
+
+```text
+self-attn -> residual + norm -> ffn -> residual + norm
+```
+
 ### 3. Decoder 在做什么？
 
 decoder 的核心任务是“按顺序生成输出”。
@@ -153,13 +201,101 @@ $$
 - 再去读取源端条件信息
 - 最后再做一层逐位置非线性变换
 
+对着最小实现看，`DecoderLayer` 必须把这三步完整写出来：
+
+```python
+class DecoderLayer(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff):
+        super().__init__()
+        self.self_attn = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=num_heads,
+            batch_first=True,
+        )
+        self.cross_attn = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=num_heads,
+            batch_first=True,
+        )
+        self.ffn = FeedForward(d_model, d_ff)
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.norm3 = nn.LayerNorm(d_model)
+
+    def forward(
+        self,
+        x,
+        memory,
+        tgt_mask=None,
+        tgt_key_padding_mask=None,
+        memory_key_padding_mask=None,
+    ):
+        self_attn_out, _ = self.self_attn(
+            x,
+            x,
+            x,
+            attn_mask=tgt_mask,
+            key_padding_mask=tgt_key_padding_mask,
+            need_weights=False,
+        )
+        x = self.norm1(x + self_attn_out)
+
+        cross_attn_out, _ = self.cross_attn(
+            x,
+            memory,
+            memory,
+            key_padding_mask=memory_key_padding_mask,
+            need_weights=False,
+        )
+        x = self.norm2(x + cross_attn_out)
+        x = self.norm3(x + self.ffn(x))
+        return x
+```
+
+这里每个成员和每一段前向逻辑都不能讲混：
+
+- `self.self_attn`：target 侧的 masked self-attention。它建模的是“已经生成的前缀之间如何相互作用”。
+- `self.cross_attn`：decoder 读取 encoder memory 的入口。这里不是自注意力，而是条件注意力。
+- `self.ffn`：和 encoder 一样，负责逐位置的非线性特征变换。
+- `self.norm1 / norm2 / norm3`：decoder 比 encoder 多一个子层，所以也多一个对应的 residual + norm。
+- `memory`：encoder 输出的上下文化表示，也就是 source 侧已经“读懂后”的结果。
+- `tgt_mask`：因果 mask，专门阻止 decoder 看未来 token。
+- `tgt_key_padding_mask`：target 里的 padding mask。
+- `memory_key_padding_mask`：source 里的 padding mask，在 cross-attention 时屏蔽掉无效 source 位置。
+
+再对着 `forward` 一步一步解释：
+
+- `self.self_attn(x, x, x, attn_mask=tgt_mask, ...)`：先在 target 侧做自注意力，但因为有 `tgt_mask`，当前位置只能看自己和左边，不能看未来。
+- `x = self.norm1(x + self_attn_out)`：先把 target 前缀内部的信息混合起来，再通过 residual 保留原始 target 表示。
+- `self.cross_attn(x, memory, memory, ...)`：这一步最关键。`Q` 来自 decoder 当前状态 `x`，`K / V` 来自 encoder 输出 `memory`，也就是“拿当前生成需求去 source memory 里检索相关信息”。
+- `x = self.norm2(x + cross_attn_out)`：把读到的 source 条件信息并回 decoder 当前状态。
+- `x = self.norm3(x + self.ffn(x))`：最后再做一层逐位置非线性变换，增强表示能力。
+
+这也是为什么 decoder 不能简单理解成“带 mask 的 encoder”。它比 encoder 多出来的，不只是一个 mask，而是一整段：
+
+```text
+current target state -> query
+encoder memory -> key/value
+cross-attention -> condition on source
+```
+
 ### 4. 为什么 decoder 的第一层要 mask？
 
 因为 decoder 是自回归生成。
 
 如果当前位置能直接看到未来 token，训练时就等于偷答案，推理时也和真实生成过程不一致。
 
-所以 decoder 的 self-attention 必须加 causal mask。
+所以 decoder 的 self-attention 必须加 causal mask。对应到上面的代码，就是：
+
+```python
+self.self_attn(
+    x,
+    x,
+    x,
+    attn_mask=tgt_mask,
+    ...
+)
+```
 
 而 encoder 通常处理的是完整输入序列，不需要维持这种因果约束，所以一般不加 causal mask。
 
@@ -182,6 +318,23 @@ $$
 $$
 \mathrm{CrossAttention}(S, E)=\mathrm{Attention}(Q(S), K(E), V(E))
 $$
+
+对应到代码，就是这一句：
+
+```python
+cross_attn_out, _ = self.cross_attn(
+    x,
+    memory,
+    memory,
+    key_padding_mask=memory_key_padding_mask,
+    need_weights=False,
+)
+```
+
+这里要直接讲出来源关系：
+
+- `x` 是 query，代表“decoder 当前想找什么信息”
+- `memory` 是 key/value，代表“encoder 里有哪些 source 信息可供检索”
 
 直觉上可以理解成：
 
@@ -260,78 +413,72 @@ $$
 - `Decoder`
 - `build_causal_mask`
 
-### 1. EncoderLayer 最小骨架
+### 1. `Encoder` 和 `Decoder` 怎么堆叠 layer
 
 ```python
-class EncoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff):
+class Encoder(nn.Module):
+    def __init__(self, num_layers, d_model, num_heads, d_ff):
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, num_heads, batch_first=True)
-        self.ffn = FeedForward(d_model, d_ff)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
+        self.layers = nn.ModuleList(
+            [EncoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)]
+        )
 
     def forward(self, x, src_key_padding_mask=None):
-        attn_out, _ = self.self_attn(
-            x, x, x,
-            key_padding_mask=src_key_padding_mask,
-            need_weights=False,
-        )
-        x = self.norm1(x + attn_out)
-        x = self.norm2(x + self.ffn(x))
+        for layer in self.layers:
+            x = layer(x, src_key_padding_mask=src_key_padding_mask)
         return x
 ```
 
-最核心的识别点只有一个：
-
-> encoder 只有 self-attention，没有 cross-attention。
-
-### 2. DecoderLayer 最小骨架
-
 ```python
-class DecoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff):
+class Decoder(nn.Module):
+    def __init__(self, num_layers, d_model, num_heads, d_ff):
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, num_heads, batch_first=True)
-        self.cross_attn = nn.MultiheadAttention(d_model, num_heads, batch_first=True)
-        self.ffn = FeedForward(d_model, d_ff)
-        self.norm1 = nn.LayerNorm(d_model)
-        self.norm2 = nn.LayerNorm(d_model)
-        self.norm3 = nn.LayerNorm(d_model)
+        self.layers = nn.ModuleList(
+            [DecoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)]
+        )
+
+    def forward(
+        self,
+        x,
+        memory,
+        tgt_mask=None,
+        tgt_key_padding_mask=None,
+        memory_key_padding_mask=None,
+    ):
+        for layer in self.layers:
+            x = layer(
+                x,
+                memory,
+                tgt_mask=tgt_mask,
+                tgt_key_padding_mask=tgt_key_padding_mask,
+                memory_key_padding_mask=memory_key_padding_mask,
+            )
+        return x
 ```
 
-它比 encoder 多出来的关键就是：
+这两段代码表达的就是：
 
-- `cross_attn`
-- 一个额外的 residual + norm
+- encoder stack：不断重复“self-attn + FFN”的表征提炼
+- decoder stack：不断重复“masked self-attn + cross-attn + FFN”的条件生成
 
-### 3. Decoder 前向传播的关键区别
+### 2. 一个最小的数据流主线
+
+因果 mask 的构造也很值得一起看：
 
 ```python
-self_attn_out, _ = self.self_attn(
-    x, x, x,
-    attn_mask=tgt_mask,
-    key_padding_mask=tgt_key_padding_mask,
-    need_weights=False,
-)
-x = self.norm1(x + self_attn_out)
-
-cross_attn_out, _ = self.cross_attn(
-    x,
-    memory,
-    memory,
-    key_padding_mask=memory_key_padding_mask,
-    need_weights=False,
-)
-x = self.norm2(x + cross_attn_out)
+def build_causal_mask(seq_len, device):
+    return torch.triu(
+        torch.ones(seq_len, seq_len, device=device, dtype=torch.bool),
+        diagonal=1,
+    )
 ```
 
-这里最值得你在面试里点出来的是：
+它做出来的是一个上三角 mask，含义是：
 
-- 第一段是 masked self-attention
-- 第二段是拿 decoder 当前状态去读 encoder memory
+- 对角线以上的位置不能看
+- 也就是当前位置不能看未来位置
 
-### 4. 一个最小的数据流主线
+整个 encoder-decoder 主线则是：
 
 ```python
 memory = encoder(src_x, src_key_padding_mask=src_key_padding_mask)
@@ -347,6 +494,14 @@ hidden = decoder(
 可以直接概括成：
 
 > encoder 先把 source 编成 memory，decoder 再在因果约束下结合这份 memory 生成 target 侧表示。
+
+### 3. 阅读这份代码时应该怎么抓重点？
+
+建议按这个顺序看：
+
+1. 先看 `EncoderLayer.forward`，理解 encoder 只做 source 内部的信息交互
+2. 再看 `DecoderLayer.forward`，重点盯住 `self.self_attn(...)` 和 `self.cross_attn(...)` 两段
+3. 最后看 `Encoder` / `Decoder` 的 stack，把“单层机制”映射到“多层堆叠”
 
 完整代码见：[minimal.py](minimal.py)
 
