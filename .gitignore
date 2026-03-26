@@ -67,3 +67,5 @@ checkpoints/
 runs/
 wandb/
 mlruns/
+.python-version
+
