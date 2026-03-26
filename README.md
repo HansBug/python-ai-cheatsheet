@@ -108,6 +108,8 @@ python-ai-cheatsheet/
 * [ ] CV 高频专题
   * [x] [CNN 基础模块](algos/cnn_basics/README.md)
   * [x] [ResNet](algos/resnet/README.md)
+  * [ ] UNet
+  * [ ] YOLO
   * [x] [Vision Transformer](algos/vision_transformer/README.md)
     * [ ] ViT
     * [ ] DeiT
