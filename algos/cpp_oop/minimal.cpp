@@ -6,7 +6,7 @@
 
 class TensorOp {
 public:
-    // 多态基类必须有虚析构，保证通过基类指针释放子类对象时安全。
+    // virtual 负责“多态销毁”，= default 负责“让编译器生成默认析构实现”。
     virtual ~TensorOp() = default;
     // 统一算子接口：不同子类都要实现如何修改一组值。
     virtual void apply(std::vector<float>& values) const = 0;
@@ -16,6 +16,10 @@ public:
 class ScaleOp : public TensorOp {
 public:
     explicit ScaleOp(float scale) : scale_(scale) {}
+
+    ~ScaleOp() override {
+        std::cout << "destroying ScaleOp\n";
+    }
 
     void apply(std::vector<float>& values) const override {
         for (float& value : values) {
@@ -34,6 +38,10 @@ private:
 class BiasOp : public TensorOp {
 public:
     explicit BiasOp(float bias) : bias_(bias) {}
+
+    ~BiasOp() override {
+        std::cout << "destroying BiasOp\n";
+    }
 
     void apply(std::vector<float>& values) const override {
         for (float& value : values) {
@@ -66,5 +74,7 @@ int main() {
         std::cout << ' ' << value;
     }
     std::cout << '\n';
+    // main 结束时，pipeline 里的 unique_ptr 会按多态方式销毁对象：
+    // 先执行各自子类析构，再回到 TensorOp 的默认虚析构。
     return 0;
 }

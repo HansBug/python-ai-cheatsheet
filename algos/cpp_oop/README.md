@@ -44,6 +44,7 @@ public:
 这几行代码本身就对应了面向对象里最重要的几个概念：
 
 - `class TensorOp`：把“算子”抽象成一个对象，而不是散落的函数
+- `virtual ~TensorOp() = default;`：声明一个虚析构函数，并让编译器直接生成默认析构实现
 - `apply(...)`：定义统一行为接口，表示“这个算子能作用在一组数据上”
 - `name()`：给外部系统一个统一查询元信息的入口
 - `= 0`：把它声明成纯虚函数，说明这里只定义接口，不给默认实现
@@ -143,7 +144,44 @@ for (const auto& op : pipeline) {
 virtual ~TensorOp() = default;
 ```
 
-这行很多人会漏，但它不是可有可无的小细节，而是多态基类的安全前提。
+这里要把它拆开讲，不要混着背：
+
+- `virtual`：说明这是虚析构函数。也就是说，如果你通过 `TensorOp*` 或 `std::unique_ptr<TensorOp>` 去销毁一个真实类型是子类的对象，析构会先动态分派到子类析构，再回到基类析构。
+- `= default`：不是“没有析构函数”，而是“让编译器帮你生成一个默认析构实现”。这里基类自己没有额外资源要手动释放，所以默认析构就够了。
+
+也就是说，这一行真正的含义是：
+
+> 这个类需要一个虚析构函数来支持多态销毁，但基类本身不需要手写析构逻辑，所以直接让编译器生成默认版本。
+
+如果你想更直观地看运行逻辑，可以看下面这个继承后的例子：
+
+```cpp
+class ScaleOp : public TensorOp {
+public:
+    explicit ScaleOp(float scale) : scale_(scale) {}
+
+    ~ScaleOp() override {
+        std::cout << "destroying ScaleOp\n";
+    }
+    ...
+};
+
+std::unique_ptr<TensorOp> op = std::make_unique<ScaleOp>(2.0f);
+```
+
+当 `op` 离开作用域时，运行逻辑是：
+
+1. `op` 的静态类型是 `std::unique_ptr<TensorOp>`，但它持有对象的动态类型是 `ScaleOp`
+2. 因为基类析构函数是 `virtual`，销毁时会先进入 `ScaleOp::~ScaleOp()`
+3. `ScaleOp` 析构结束后，再继续执行 `TensorOp::~TensorOp()`
+4. 而 `TensorOp::~TensorOp()` 因为写的是 `= default`，它的函数体由编译器生成，这里等价于“基类没有额外自定义析构逻辑”
+
+所以真正重要的是：
+
+- `virtual` 决定“会不会正确走到子类析构”
+- `= default` 决定“基类析构函数本身由谁来实现”
+
+如果把 `virtual` 去掉，那么通过基类指针 / 基类智能指针销毁子类对象时，运行行为就不再安全了，这才是最危险的点。
 
 ### 5. AI / Python 相关代码里，多态一般用在哪？
 
