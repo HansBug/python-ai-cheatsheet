@@ -10,9 +10,11 @@
 
 这是一个专注于**AI 算法工程岗面试**的 Python 速查仓库。这里说的“算法”不是刷题里的哈希表、线段树那种题型模板，而是更偏：
 
+- 深度学习基础 / 训练机制
 - LLM / Transformer
-- RL / PPO / DPO
-- CV / Detection / Segmentation / Diffusion
+- CV / Detection / Segmentation / Diffusion / Perception
+- 图形学 / 计算几何
+- C++ / Python 互操作 / OpenMP
 - CUDA / 算子 / 推理优化
 - 训练稳定性、并行策略、评测与工程落地
 
@@ -79,6 +81,14 @@ python-ai-cheatsheet/
 
 > 当前仓库骨架已搭好，后续会按“AI 面试高频 + 可追问 + 可手写”的标准逐步补齐。
 
+* [ ] 深度学习基础
+  * [ ] 反向传播 / 计算图
+  * [ ] MLP / 全连接网络
+  * [ ] 常见激活函数
+  * [ ] 常见损失函数
+  * [ ] 常见 Optimizer（SGD / Momentum / Adam / AdamW）
+  * [ ] PyTorch `nn.Module` / Autograd 基础
+  * [ ] 参数初始化
 * [ ] Transformer 基础
   * [x] [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)
   * [x] [Positional Encoding / RoPE](algos/positional_encoding/README.md)
@@ -105,7 +115,13 @@ python-ai-cheatsheet/
   * [ ] GRPO
   * [ ] Reward Model
   * [ ] Advantage Estimation
-* [ ] CV 高频专题
+* [ ] CV基础
+  * [ ] 图像表示 / 颜色空间
+  * [ ] 图像滤波 / 边缘检测
+  * [ ] 特征点 / 描述子
+  * [ ] 相机模型 / 投影几何
+  * [ ] 单应性 / RANSAC
+* [ ] 深度学习CV
   * [x] [CNN 基础模块](algos/cnn_basics/README.md)
   * [x] [ResNet](algos/resnet/README.md)
   * [ ] UNet
@@ -119,12 +135,36 @@ python-ai-cheatsheet/
     * [ ] EVA / EVA-02
   * [ ] Detection Head
   * [ ] Diffusion 基础
+* [ ] 图形学专题
+  * [ ] 二维向量 / 仿射变换
+  * [ ] 线段相交 / 点在多边形内
+  * [ ] 凸包 / 旋转卡壳
+  * [ ] 扫描线 / 多边形面积
+  * [ ] 贝塞尔曲线 / 样条
+  * [ ] 三维变换基础
+  * [ ] 光线与三角形相交
+* [ ] 感知算法专题
+  * [ ] 卡尔曼滤波 / 扩展卡尔曼滤波
+  * [ ] 多目标跟踪
+  * [ ] 传感器融合
+  * [ ] SLAM 基础
+  * [ ] 点云基础
+  * [ ] BEV 感知
+  * [ ] Occupancy / Mapping
 * [ ] CUDA 与算子优化
   * [ ] CUDA 内存模型
   * [ ] 常见 kernel 优化思路
   * [ ] Flash Attention 思路
   * [ ] Triton 入门
   * [ ] PyTorch 自定义算子
+* [ ] C++专题
+  * [ ] C++ 面向对象 / 多态
+  * [ ] 模板 / 泛型
+  * [ ] RAII / 智能指针
+  * [ ] 左值右值 / move 语义
+  * [ ] OpenMP
+  * [ ] pybind11 / Python-C++ 互操作
+  * [ ] C++ 并发基础
 * [ ] 分布式训练
   * [ ] Data Parallel
   * [ ] Tensor Parallel
@@ -174,7 +214,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md) 和 [Vision Transformer](algos/vision_transformer/README.md) 八个专题。后续会继续补 Transformer / LLM 的高频基础模块、CV 高频模块和模型家族精读。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md) 和 [Vision Transformer](algos/vision_transformer/README.md) 八个专题。后续会继续补深度学习基础、CV 基础、深度学习 CV、LLM / Transformer、感知算法、图形学和 C++ 相关专题。
 
 ## 许可证
 
