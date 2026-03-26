@@ -20,9 +20,7 @@
 
 设简单多边形顶点按顺序给出：
 
-$$
-P_0, P_1, \ldots, P_{n-1}, \quad P_i = (x_i, y_i)
-$$
+$$ P_0, P_1, \ldots, P_{n-1}, \quad P_i = (x_i, y_i) $$
 
 这里默认：
 
@@ -55,35 +53,23 @@ def signed_polygon_area(points):
 
 所以整条公式其实就是：
 
-$$
-S_{\mathrm{signed}}
-=
-\frac{1}{2}
-\sum_{i=0}^{n-1}
-\left(x_i y_{i+1} - y_i x_{i+1}\right)
-$$
+$$ S_{\mathrm{signed}} = \frac{1}{2} \sum_{i=0}^{n-1} \left(x_i y_{i+1} - y_i x_{i+1}\right) $$
 
 其中下标按模 `n` 处理，也就是 `P_n = P_0`。
 
 取绝对值后就是通常说的几何面积：
 
-$$
-S = \left| S_{\mathrm{signed}} \right|
-$$
+$$ S = \left| S_{\mathrm{signed}} \right| $$
 
 ### 3. 先证明一个更小的结论：三角形有向面积
 
 对两个向量：
 
-$$
-a = (x_1, y_1), \quad b = (x_2, y_2)
-$$
+$$ a = (x_1, y_1), \quad b = (x_2, y_2) $$
 
 它们的二维叉积写成：
 
-$$
-a \times b = x_1 y_2 - y_1 x_2
-$$
+$$ a \times b = x_1 y_2 - y_1 x_2 $$
 
 它的几何意义是：
 
@@ -93,13 +79,7 @@ $$
 
 所以三角形 `\triangle OAB` 的有向面积是：
 
-$$
-S_{\mathrm{signed}}(\triangle OAB)
-=
-\frac{1}{2}(a \times b)
-=
-\frac{1}{2}(x_1 y_2 - y_1 x_2)
-$$
+$$ S_{\mathrm{signed}}(\triangle OAB) = \frac{1}{2}(a \times b) = \frac{1}{2}(x_1 y_2 - y_1 x_2) $$
 
 这就是后面整个多边形公式的基础。
 
@@ -111,28 +91,11 @@ $$
 
 如果把每条边 `P_i -> P_{i+1}` 都和原点 `O` 组成一个三角形，那么第 `i` 项贡献就是：
 
-$$
-S_i
-=
-\frac{1}{2}
-\left(
-x_i y_{i+1} - y_i x_{i+1}
-\right)
-$$
+$$ S_i = \frac{1}{2} \left( x_i y_{i+1} - y_i x_{i+1} \right) $$
 
 把所有边加起来，就得到：
 
-$$
-S_{\mathrm{signed}}
-=
-\sum_{i=0}^{n-1} S_i
-=
-\frac{1}{2}
-\sum_{i=0}^{n-1}
-\left(
-x_i y_{i+1} - y_i x_{i+1}
-\right)
-$$
+$$ S_{\mathrm{signed}} = \sum_{i=0}^{n-1} S_i = \frac{1}{2} \sum_{i=0}^{n-1} \left( x_i y_{i+1} - y_i x_{i+1} \right) $$
 
 ### 5. 这个推导为什么对任意简单多边形都成立？
 
@@ -163,46 +126,27 @@ $$
 
 假设不用原点，而是任取一个参考点 `Q`，那么每一项三角形面积会变成：
 
-$$
-\frac{1}{2}
-\left(
-(P_i - Q) \times (P_{i+1} - Q)
-\right)
-$$
+$$ \frac{1}{2} \left( (P_i - Q) \times (P_{i+1} - Q) \right) $$
 
 把它展开：
 
-$$
-(P_i - Q) \times (P_{i+1} - Q)
-=
-P_i \times P_{i+1}
-- P_i \times Q
-- Q \times P_{i+1}
-$$
+$$ (P_i - Q) \times (P_{i+1} - Q) = P_i \times P_{i+1} - P_i \times Q - Q \times P_{i+1} $$
 
 又因为叉积反对称：
 
-$$
-- P_i \times Q = Q \times P_i
-$$
+$$ - P_i \times Q = Q \times P_i $$
 
 所以求和后，中间项会变成：
 
-$$
-\sum_{i=0}^{n-1} Q \times (P_i - P_{i+1})
-$$
+$$ \sum_{i=0}^{n-1} Q \times (P_i - P_{i+1}) $$
 
 而顶点首尾相接，所以：
 
-$$
-\sum_{i=0}^{n-1} (P_i - P_{i+1}) = 0
-$$
+$$ \sum_{i=0}^{n-1} (P_i - P_{i+1}) = 0 $$
 
 于是这些额外项全部消掉，只剩：
 
-$$
-\sum_{i=0}^{n-1} P_i \times P_{i+1}
-$$
+$$ \sum_{i=0}^{n-1} P_i \times P_{i+1} $$
 
 这就证明了：
 
@@ -214,16 +158,7 @@ $$
 
 把式子写展开：
 
-$$
-S_{\mathrm{signed}}
-=
-\frac{1}{2}
-\left[
-(x_0 y_1 + x_1 y_2 + \cdots + x_{n-1} y_0)
--
-(y_0 x_1 + y_1 x_2 + \cdots + y_{n-1} x_0)
-\right]
-$$
+$$ S_{\mathrm{signed}} = \frac{1}{2} \left[ (x_0 y_1 + x_1 y_2 + \cdots + x_{n-1} y_0) - (y_0 x_1 + y_1 x_2 + \cdots + y_{n-1} x_0) \right] $$
 
 如果把 `x` 列和 `y` 列上下排开，交叉相乘的连线看起来像鞋带，所以叫 Shoelace Formula。
 

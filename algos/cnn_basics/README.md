@@ -24,9 +24,7 @@
 
 图像输入通常是：
 
-$$
-X \in \mathbb{R}^{B \times C \times H \times W}
-$$
+$$ X \in \mathbb{R}^{B \times C \times H \times W} $$
 
 它和文本序列不一样，图像最重要的结构是：
 
@@ -46,9 +44,7 @@ CNN 的做法就是把这些先验直接写进模型结构里：
 
 最基础的二维卷积可以写成：
 
-$$
-Y[b, o, i, j] = \sum_{c, u, v} X_{\mathrm{pad}}[b, c, i \cdot s + u, j \cdot s + v] \cdot W[o, c, u, v] + b[o]
-$$
+$$ Y[b, o, i, j] = \sum_{c, u, v} X_{\mathrm{pad}}[b, c, i \cdot s + u, j \cdot s + v] \cdot W[o, c, u, v] + b[o] $$
 
 这里最重要的几个量是：
 

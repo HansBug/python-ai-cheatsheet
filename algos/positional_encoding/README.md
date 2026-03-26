@@ -18,9 +18,7 @@
 
 Self-Attention 会计算：
 
-$$
-\mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
-$$
+$$ \mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V $$
 
 这里本质上只关心向量之间的匹配程度。
 
@@ -45,13 +43,9 @@ $$
 
 公式是：
 
-$$
-\mathrm{PE}(pos, 2i)=\sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)
-$$
+$$ \mathrm{PE}(pos, 2i)=\sin\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right) $$
 
-$$
-\mathrm{PE}(pos, 2i+1)=\cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)
-$$
+$$ \mathrm{PE}(pos, 2i+1)=\cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right) $$
 
 这里几个符号的意思要分清：
 
@@ -104,37 +98,17 @@ RoPE 全称 Rotary Position Embedding。
 
 如果看单个位置 $pos$、单个频率对 $j$，RoPE 可以写成：
 
-$$
-\theta_j = pos \cdot 10000^{-2j/d}
-$$
+$$ \theta_j = pos \cdot 10000^{-2j/d} $$
 
-$$
-\begin{bmatrix}
-x'_{2j} \\
-x'_{2j+1}
-\end{bmatrix}
-=
-\begin{bmatrix}
-\cos \theta_j & -\sin \theta_j \\
-\sin \theta_j & \cos \theta_j
-\end{bmatrix}
-\begin{bmatrix}
-x_{2j} \\
-x_{2j+1}
-\end{bmatrix}
-$$
+$$ \begin{bmatrix} x'_{2j} \\ x'_{2j+1} \end{bmatrix} = \begin{bmatrix} \cos \theta_j & -\sin \theta_j \\ \sin \theta_j & \cos \theta_j \end{bmatrix} \begin{bmatrix} x_{2j} \\ x_{2j+1} \end{bmatrix} $$
 
 也就是把第 $2j$ 维和第 $2j+1$ 维看成一个二维向量，然后按位置相关的角度做旋转。
 
 展开后就是：
 
-$$
-x'_{2j}=x_{2j}\cos\theta_j-x_{2j+1}\sin\theta_j
-$$
+$$ x'_{2j}=x_{2j}\cos\theta_j-x_{2j+1}\sin\theta_j $$
 
-$$
-x'_{2j+1}=x_{2j}\sin\theta_j+x_{2j+1}\cos\theta_j
-$$
+$$ x'_{2j+1}=x_{2j}\sin\theta_j+x_{2j+1}\cos\theta_j $$
 
 这也是为什么代码实现里，RoPE 往往都是“偶数维和奇数维成对处理”。
 
@@ -320,9 +294,7 @@ k = apply_rope(k, cos, sin)
 
 然后再去算：
 
-$$
-\text{scores}=qk^\top
-$$
+$$ \text{scores}=qk^\top $$
 
 ## 工程关注点
 

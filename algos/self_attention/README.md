@@ -58,9 +58,7 @@ X: [seq_len, d_model]
 
 先线性映射得到：
 
-$$
-Q = XW_Q,\quad K = XW_K,\quad V = XW_V
-$$
+$$ Q = XW_Q,\quad K = XW_K,\quad V = XW_V $$
 
 然后做四步：
 
@@ -71,9 +69,7 @@ $$
 
 公式是：
 
-$$
-\mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V
-$$
+$$ \mathrm{Attention}(Q, K, V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_k}}\right)V $$
 
 ### 4. 为什么要除以 `sqrt(d_k)`？
 
@@ -109,13 +105,9 @@ $$
 
 公式是：
 
-$$
-\mathrm{head}_i=\mathrm{Attention}(Q_i, K_i, V_i)
-$$
+$$ \mathrm{head}_i=\mathrm{Attention}(Q_i, K_i, V_i) $$
 
-$$
-\mathrm{MultiHead}(Q, K, V)=\mathrm{Concat}(\mathrm{head}_1,\ldots,\mathrm{head}_h)W_O
-$$
+$$ \mathrm{MultiHead}(Q, K, V)=\mathrm{Concat}(\mathrm{head}_1,\ldots,\mathrm{head}_h)W_O $$
 
 ### 6. 形状怎么记？
 
@@ -161,9 +153,7 @@ attention output : [B, H, T, head_dim]
 
 核心瓶颈是注意力分数矩阵：
 
-$$
-QK^\top \in \mathbb{R}^{T \times T}
-$$
+$$ QK^\top \in \mathbb{R}^{T \times T} $$
 
 所以时间复杂度和显存复杂度通常都与 $T^2$ 相关。
 

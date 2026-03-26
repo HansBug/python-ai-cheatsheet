@@ -20,10 +20,7 @@
 
 设两个多边形分别是：
 
-$$
-A = (a_0, a_1, \ldots, a_{m-1}), \quad
-B = (b_0, b_1, \ldots, b_{n-1})
-$$
+$$ A = (a_0, a_1, \ldots, a_{m-1}), \quad B = (b_0, b_1, \ldots, b_{n-1}) $$
 
 默认前提：
 
@@ -97,15 +94,11 @@ def convex_polygons_intersect(poly_a, poly_b, eps=1e-9):
 
 因为凸多边形 `B` 本身就可以看成这些内部半平面的交：
 
-$$
-B = H_0 \cap H_1 \cap \cdots \cap H_{n-1}
-$$
+$$ B = H_0 \cap H_1 \cap \cdots \cap H_{n-1} $$
 
 于是：
 
-$$
-A \cap B = A \cap H_0 \cap H_1 \cap \cdots \cap H_{n-1}
-$$
+$$ A \cap B = A \cap H_0 \cap H_1 \cap \cdots \cap H_{n-1} $$
 
 这就是 Sutherland-Hodgman 裁剪算法在这里的核心思想。
 
@@ -116,9 +109,7 @@ $$
 
 判断一个点 `P` 是否在内部，可以直接看叉积符号：
 
-$$
-(C_{i+1} - C_i) \times (P - C_i) \ge 0
-$$
+$$ (C_{i+1} - C_i) \times (P - C_i) \ge 0 $$
 
 对应代码就是：
 
@@ -191,37 +182,25 @@ def clip_with_half_plane(subject, a, b, eps=1e-9):
 
 一开始：
 
-$$
-S_0 = A
-$$
+$$ S_0 = A $$
 
 #### 归纳步骤
 
 假设裁完前 `k` 条边后：
 
-$$
-S_k = A \cap H_0 \cap \cdots \cap H_{k-1}
-$$
+$$ S_k = A \cap H_0 \cap \cdots \cap H_{k-1} $$
 
 再用第 `k` 条边对应的半平面 `H_k` 去裁：
 
-$$
-S_{k+1} = S_k \cap H_k
-$$
+$$ S_{k+1} = S_k \cap H_k $$
 
 所以：
 
-$$
-S_{k+1}
-=
-A \cap H_0 \cap \cdots \cap H_k
-$$
+$$ S_{k+1} = A \cap H_0 \cap \cdots \cap H_k $$
 
 裁完所有边后就得到：
 
-$$
-S_n = A \cap B
-$$
+$$ S_n = A \cap B $$
 
 这就证明了裁剪算法的正确性。
 

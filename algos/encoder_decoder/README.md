@@ -84,9 +84,7 @@ encoder 的核心任务是“理解输入”。
 
 它会把整段 source sequence 编码成带上下文的信息表示，输出通常记作：
 
-$$
-E \in \mathbb{R}^{B \times T_{\mathrm{src}} \times D}
-$$
+$$ E \in \mathbb{R}^{B \times T_{\mathrm{src}} \times D} $$
 
 这组表示有几个关键特征：
 
@@ -101,13 +99,9 @@ $$
 
 写成最常见的形式就是：
 
-$$
-H' = \mathrm{LN}(H + \mathrm{MHA}(H, H, H))
-$$
+$$ H' = \mathrm{LN}(H + \mathrm{MHA}(H, H, H)) $$
 
-$$
-H'' = \mathrm{LN}(H' + \mathrm{FFN}(H'))
-$$
+$$ H'' = \mathrm{LN}(H' + \mathrm{FFN}(H')) $$
 
 这里之所以叫 self-attention，是因为：
 
@@ -178,17 +172,11 @@ decoder 的核心任务是“按顺序生成输出”。
 
 公式可以写成：
 
-$$
-S' = \mathrm{LN}(S + \mathrm{MaskedMHA}(S, S, S))
-$$
+$$ S' = \mathrm{LN}(S + \mathrm{MaskedMHA}(S, S, S)) $$
 
-$$
-S'' = \mathrm{LN}(S' + \mathrm{MHA}(S', E, E))
-$$
+$$ S'' = \mathrm{LN}(S' + \mathrm{MHA}(S', E, E)) $$
 
-$$
-S''' = \mathrm{LN}(S'' + \mathrm{FFN}(S''))
-$$
+$$ S''' = \mathrm{LN}(S'' + \mathrm{FFN}(S'')) $$
 
 其中：
 
@@ -315,9 +303,7 @@ self.self_attn(
 
 也就是：
 
-$$
-\mathrm{CrossAttention}(S, E)=\mathrm{Attention}(Q(S), K(E), V(E))
-$$
+$$ \mathrm{CrossAttention}(S, E)=\mathrm{Attention}(Q(S), K(E), V(E)) $$
 
 对应到代码，就是这一句：
 
@@ -520,9 +506,7 @@ hidden = decoder(
 
 decoder self-attention 主要看 $T_{\mathrm{tgt}}^2$，而 cross-attention 主要看：
 
-$$
-T_{\mathrm{tgt}} \times T_{\mathrm{src}}
-$$
+$$ T_{\mathrm{tgt}} \times T_{\mathrm{src}} $$
 
 所以 source 很长时，decoder 读取 encoder memory 的成本也会上来。
 

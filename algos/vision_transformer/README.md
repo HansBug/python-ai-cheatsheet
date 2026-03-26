@@ -24,9 +24,7 @@ Transformer 最早处理的是 token 序列。
 
 图像看起来不是序列，而是：
 
-$$
-X \in \mathbb{R}^{B \times C \times H \times W}
-$$
+$$ X \in \mathbb{R}^{B \times C \times H \times W} $$
 
 ViT 的关键改写是：
 
@@ -34,9 +32,7 @@ ViT 的关键改写是：
 
 如果 patch size 是 $P \times P$，那么 patch 数量就是：
 
-$$
-N = \frac{H}{P} \times \frac{W}{P}
-$$
+$$ N = \frac{H}{P} \times \frac{W}{P} $$
 
 于是图像就被改写成长度为 $N$ 的 patch 序列。
 
@@ -294,9 +290,7 @@ class PatchEmbedding(nn.Module):
 
 这一步输出的是：
 
-$$
-[B, C, H, W] \rightarrow [B, N, D]
-$$
+$$ [B, C, H, W] \rightarrow [B, N, D] $$
 
 也就是从图像张量，变成 Transformer 能吃的 token 序列。
 
@@ -378,9 +372,7 @@ logits = self.head(cls_state)
 
 如果输入大小固定为 $H \times W$，patch size 为 $P$，那么 token 数是：
 
-$$
-N = \frac{H}{P} \times \frac{W}{P}
-$$
+$$ N = \frac{H}{P} \times \frac{W}{P} $$
 
 self-attention 的主要复杂度会随 $N^2$ 增长。
 

@@ -40,31 +40,21 @@ LayerNorm 不是按 batch 归一化，也不是按整个序列归一化。
 
 如果一个 token 的隐藏状态是：
 
-$$
-x \in \mathbb{R}^{d}
-$$
+$$ x \in \mathbb{R}^{d} $$
 
 那么它先计算均值和方差：
 
-$$
-\mu = \frac{1}{d}\sum_{i=1}^{d} x_i
-$$
+$$ \mu = \frac{1}{d}\sum_{i=1}^{d} x_i $$
 
-$$
-\sigma^2 = \frac{1}{d}\sum_{i=1}^{d}(x_i-\mu)^2
-$$
+$$ \sigma^2 = \frac{1}{d}\sum_{i=1}^{d}(x_i-\mu)^2 $$
 
 然后做标准化：
 
-$$
-\hat{x}_i = \frac{x_i-\mu}{\sqrt{\sigma^2+\varepsilon}}
-$$
+$$ \hat{x}_i = \frac{x_i-\mu}{\sqrt{\sigma^2+\varepsilon}} $$
 
 最后再加可学习参数：
 
-$$
-y_i = \gamma_i \hat{x}_i + \beta_i
-$$
+$$ y_i = \gamma_i \hat{x}_i + \beta_i $$
 
 这里：
 
@@ -85,17 +75,11 @@ RMSNorm 可以看成 LayerNorm 的简化版。
 
 它不再显式减去均值，只保留按均方根做缩放：
 
-$$
-\mathrm{RMS}(x)=\sqrt{\frac{1}{d}\sum_{i=1}^{d}x_i^2+\varepsilon}
-$$
+$$ \mathrm{RMS}(x)=\sqrt{\frac{1}{d}\sum_{i=1}^{d}x_i^2+\varepsilon} $$
 
-$$
-\hat{x}_i=\frac{x_i}{\mathrm{RMS}(x)}
-$$
+$$ \hat{x}_i=\frac{x_i}{\mathrm{RMS}(x)} $$
 
-$$
-y_i=\gamma_i \hat{x}_i
-$$
+$$ y_i=\gamma_i \hat{x}_i $$
 
 很多实现里 RMSNorm 没有独立的 $\beta$ 偏置项。
 
