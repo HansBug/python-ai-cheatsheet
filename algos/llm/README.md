@@ -47,12 +47,12 @@
 
 LLM 预训练最核心的目标通常可以写成：
 
-$$ p(x_1, x_2, \ldots, x_T) = \prod_{t=1}^{T} p(x_t \mid x_{<t}) $$
+$$ p(x_1, x_2, \ldots, x_T) = \prod_{t=1}^{T} p(x_t \mid x_1, x_2, \ldots, x_{t-1}) $$
 
 这里：
 
 - $x_t$：第 `t` 个 token
-- $x_{<t}$：当前位置之前的所有 token
+- $x_1, x_2, \ldots, x_{t-1}$：当前位置之前的所有 token
 
 这句话翻成人话就是：
 
@@ -83,6 +83,19 @@ class TinyDecoderOnlyLM(nn.Module):
         )
         self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+
+    def forward(self, input_ids):
+        batch_size, seq_len = input_ids.shape
+        positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+        positions = positions.expand(batch_size, seq_len)
+
+        x = self.token_embedding(input_ids) + self.position_embedding(positions)
+        for block in self.blocks:
+            x = block(x)
+
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+        return logits
 ```
 
 这段代码里，每一块都对应一个 LLM 的关键部件：
@@ -118,28 +131,24 @@ class DecoderBlock(nn.Module):
         )
         self.ln_2 = nn.LayerNorm(d_model)
         self.ffn = FeedForward(d_model=d_model, d_ff=d_ff)
+
+    def forward(self, x):
+        seq_len = x.shape[1]
+        causal_mask = build_causal_mask(seq_len=seq_len, device=x.device)
+
+        h = self.ln_1(x)
+        attn_out, _ = self.attn(h, h, h, attn_mask=causal_mask, need_weights=False)
+        x = x + attn_out
+
+        h = self.ln_2(x)
+        x = x + self.ffn(h)
+        return x
 ```
 
 你可以直接这么讲：
 
 - `ln_1` + `attn`：让每个 token 在因果约束下看左侧上下文
 - `ln_2` + `ffn`：对每个位置再做一层非线性变换
-
-真正前向时会这样走：
-
-```python
-def forward(self, x):
-    seq_len = x.shape[1]
-    causal_mask = build_causal_mask(seq_len=seq_len, device=x.device)
-
-    h = self.ln_1(x)
-    attn_out, _ = self.attn(h, h, h, attn_mask=causal_mask, need_weights=False)
-    x = x + attn_out
-
-    h = self.ln_2(x)
-    x = x + self.ffn(h)
-    return x
-```
 
 这里每一步对应的含义很明确：
 
@@ -161,9 +170,18 @@ LLM 每次前向传播，输出的不是“文字答案”，而是：
 在最小实现里最后一步是：
 
 ```python
-x = self.ln_f(x)
-logits = self.lm_head(x)
-return logits
+def forward(self, input_ids):
+    batch_size, seq_len = input_ids.shape
+    positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+    positions = positions.expand(batch_size, seq_len)
+
+    x = self.token_embedding(input_ids) + self.position_embedding(positions)
+    for block in self.blocks:
+        x = block(x)
+
+    x = self.ln_f(x)
+    logits = self.lm_head(x)
+    return logits
 ```
 
 这里：
@@ -500,15 +518,18 @@ class SimpleTokenizer:
 看 `TinyDecoderOnlyLM.forward`：
 
 ```python
-positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
-positions = positions.expand(batch_size, seq_len)
+def forward(self, input_ids):
+    batch_size, seq_len = input_ids.shape
+    positions = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+    positions = positions.expand(batch_size, seq_len)
 
-x = self.token_embedding(input_ids) + self.position_embedding(positions)
-for block in self.blocks:
-    x = block(x)
+    x = self.token_embedding(input_ids) + self.position_embedding(positions)
+    for block in self.blocks:
+        x = block(x)
 
-x = self.ln_f(x)
-logits = self.lm_head(x)
+    x = self.ln_f(x)
+    logits = self.lm_head(x)
+    return logits
 ```
 
 这段代码要这样理解：
