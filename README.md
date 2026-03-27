@@ -127,7 +127,7 @@ python-ai-cheatsheet/
   * [x] [CNN 基础模块](algos/cnn_basics/README.md)
   * [x] [ResNet](algos/resnet/README.md)
   * [ ] UNet
-  * [ ] YOLO
+  * [x] [YOLO](algos/yolo/README.md)
   * [x] [Vision Transformer](algos/vision_transformer/README.md)
     * [ ] ViT
     * [ ] DeiT
@@ -219,7 +219,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[LLM 结构与推理流程](algos/llm/README.md)、[强化学习基础与发展沿革](algos/reinforcement_learning_basics/README.md)、[DQN](algos/dqn/README.md)、[PPO](algos/ppo/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md)、[Vision Transformer](algos/vision_transformer/README.md)、[相机模型 / 投影几何](algos/camera_projection/README.md)、[多目标跟踪](algos/multi_object_tracking/README.md)、[BEV 感知](algos/bev_perception/README.md)、[C++ 面向对象 / 多态](algos/cpp_oop/README.md)、[模板 / 泛型](algos/cpp_templates/README.md)、[OpenMP](algos/openmp/README.md)、[pybind11 / Python-C++ 互操作](algos/pybind11/README.md)、[任意多边形面积公式](algos/polygon_area/README.md) 和 [凸多边形相交判定与求交](algos/convex_polygon_intersection/README.md) 二十一篇专题内容。后续会继续补深度学习基础、CV 基础、深度学习 CV、LLM / Transformer、感知算法、图形学和 C++ 相关专题。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[LLM 结构与推理流程](algos/llm/README.md)、[强化学习基础与发展沿革](algos/reinforcement_learning_basics/README.md)、[DQN](algos/dqn/README.md)、[PPO](algos/ppo/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md)、[YOLO](algos/yolo/README.md)、[Vision Transformer](algos/vision_transformer/README.md)、[相机模型 / 投影几何](algos/camera_projection/README.md)、[多目标跟踪](algos/multi_object_tracking/README.md)、[BEV 感知](algos/bev_perception/README.md)、[C++ 面向对象 / 多态](algos/cpp_oop/README.md)、[模板 / 泛型](algos/cpp_templates/README.md)、[OpenMP](algos/openmp/README.md)、[pybind11 / Python-C++ 互操作](algos/pybind11/README.md)、[任意多边形面积公式](algos/polygon_area/README.md) 和 [凸多边形相交判定与求交](algos/convex_polygon_intersection/README.md) 二十二篇专题内容。后续会继续补深度学习基础、CV 基础、深度学习 CV、LLM / Transformer、感知算法、图形学和 C++ 相关专题。
 
 ## 许可证
 
