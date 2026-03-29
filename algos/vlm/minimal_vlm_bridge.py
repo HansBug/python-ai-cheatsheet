@@ -38,6 +38,15 @@ class PatchEncoder(nn.Module):
         return self.norm(x)
 
 
+class LinearProjector(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+        self.proj = nn.Linear(in_dim, out_dim)
+
+    def forward(self, visual_tokens):
+        return self.proj(visual_tokens)
+
+
 class MLPProjector(nn.Module):
     def __init__(self, in_dim, out_dim):
         super().__init__()
@@ -51,25 +60,38 @@ class MLPProjector(nn.Module):
         return self.net(visual_tokens)
 
 
+def build_projector(projector_type, in_dim, out_dim):
+    if projector_type == "linear":
+        return LinearProjector(in_dim=in_dim, out_dim=out_dim)
+    if projector_type == "mlp":
+        return MLPProjector(in_dim=in_dim, out_dim=out_dim)
+    raise ValueError(f"Unsupported projector_type: {projector_type}")
+
+
 class TinyVLM(nn.Module):
     def __init__(
         self,
         vocab_size,
-        image_size=224,
         patch_size=16,
         vision_width=64,
         d_model=128,
         num_heads=4,
         num_layers=2,
         max_len=512,
+        projector_type="mlp",
     ):
         super().__init__()
+        # In real VLMs this module is often a CLIP/SigLIP/EVA/InternViT-style vision tower.
         self.vision_encoder = PatchEncoder(
             in_channels=3,
             patch_size=patch_size,
             width=vision_width,
         )
-        self.projector = MLPProjector(in_dim=vision_width, out_dim=d_model)
+        self.projector = build_projector(
+            projector_type=projector_type,
+            in_dim=vision_width,
+            out_dim=d_model,
+        )
         self.token_embedding = nn.Embedding(vocab_size, d_model)
         self.pos_embedding = nn.Embedding(max_len, d_model)
 
@@ -83,13 +105,17 @@ class TinyVLM(nn.Module):
         self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
 
-    def encode_image(self, images):
-        visual_tokens = self.vision_encoder(images)
-        return self.projector(visual_tokens)
-
     def forward(self, images, input_ids):
-        visual_tokens = self.encode_image(images)
+        # 1. Encode pixels into visual tokens.
+        visual_tokens = self.vision_encoder(images)
+
+        # 2. Bridge vision width to the language hidden size.
+        visual_tokens = self.projector(visual_tokens)
+
+        # 3. Turn token ids into text embeddings.
         text_tokens = self.token_embedding(input_ids)
+
+        # 4. Concatenate visual prefix and text tokens into one sequence.
         x = torch.cat([visual_tokens, text_tokens], dim=1)
 
         positions = torch.arange(x.shape[1], device=x.device).unsqueeze(0)

@@ -8,27 +8,25 @@
 
 ## 这是什么？
 
-这是 VLM 机制部分的第一篇，先把最大的问题讲清楚：
+这是 VLM 机制部分的第一篇，先把主线讲清楚：
 
-- LLM 原本只会处理 token，为什么后来能看图？
-- VLM 到底是在 LLM 前面接了什么东西？
-- 图像是怎么被改写成 LLM 能消费的“视觉 token”的？
-- 训练时到底在教模型学什么？
+- LLM 原本为什么不会看图
+- VLM 到底是在 LLM 前面接了什么
+- image encoder 和 projector 分别负责什么
+- 为什么图像最后能变成 LLM 可以消费的 token 序列
 
 如果只用一句话概括：
 
-> VLM 的本质，不是“让 LLM 直接看像素”，而是先用视觉编码器把图像变成视觉特征，再用 projector 把视觉特征对齐到 LLM 的表示空间里，让 LLM 像读一段前缀 token 一样去消费这些视觉信息。
+> VLM 不是让 LLM 直接学像素，而是先用视觉编码器把图像压成视觉特征，再用 projector 把这些特征桥接到 LLM 的隐藏空间里，让 LLM 像读前缀 token 一样读视觉信息。
 
 ## 核心机制
 
 ### 1. 为什么原始 LLM 没有视觉能力？
 
-因为原始 LLM 的输入通常只有离散 token id。
-
-它最熟悉的数据流是：
+原始 LLM 最熟悉的数据流是：
 
 ```text
-text -> tokenizer -> token ids -> token embeddings -> Transformer blocks -> next-token logits
+text -> tokenizer -> token ids -> token embeddings -> Transformer -> next-token logits
 ```
 
 这里没有任何一步会直接处理：
@@ -49,211 +47,328 @@ text -> tokenizer -> text tokens
 visual tokens + text tokens -> LLM -> answer tokens
 ```
 
-如果写成更抽象的形式：
+写成抽象形式就是：
 
 $$ v = f_{\mathrm{img}}(x), \quad z = g(v), \quad h_0 = [z; e(t)] $$
 
 这里：
 
 - $x$：输入图像
-- $f_{\mathrm{img}}$：视觉编码器，比如 ViT
+- $f_{\mathrm{img}}$：视觉编码器
 - $v$：视觉特征
-- $g$：projector，把视觉特征映射到 LLM 的隐藏空间
+- $g$：projector
 - $e(t)$：文本 token embedding
-- $[z; e(t)]$：把视觉 token 和文本 token 拼成一个联合序列
+- $[z; e(t)]$：视觉 token 和文本 token 拼接后的联合序列
 
-这就是 VLM 最值得先讲明白的一点：
+最关键的一句话是：
 
-> LLM 不是突然“长出眼睛”了，而是前面先有人把图像翻译成了它能理解的向量序列。
+> LLM 不是“突然能看图”，而是有人先把图像翻译成了它能读的向量序列。
 
-### 3. 为什么需要 projector？
+### 3. VLM 里的 image encoder 常见有哪些？
 
-因为视觉编码器和 LLM 的表示空间通常不一样。
+这里先澄清一个很容易混的点：
 
-例如：
+> VLM 里常说“用 CLIP encoder”或“用 SigLIP encoder”，更准确地说，是拿 CLIP / SigLIP 这类图文预训练方法训出来的视觉 tower 当 image encoder 用，而不是把整个 CLIP / SigLIP 原封不动塞进来。
 
-- 视觉编码器输出维度可能是 `1024`
-- LLM 隐藏维度可能是 `4096`
-- 两边的统计分布和语义组织方式也不一样
+常见 image encoder 大致有这几类：
 
-所以中间要有一层桥接：
+#### 1. CLIP 风格的 ViT visual tower
 
-- 最简单是 `Linear`
-- 常见一点是 `MLP`
-- 更复杂会用 `Resampler / Q-Former / Cross-Attention`
+这是最经典的一类。
 
-projector 做的事可以直接讲成：
+特点是：
 
-> 它负责把“视觉 backbone 的特征”改写成“LLM 愿意接收的输入 token”。
+- 已经有很强的图文对齐先验
+- 语义级表征成熟
+- 很多早期开源 VLM 都直接用它当视觉前端
 
-### 4. VLM 是怎么被训练出来的？
+面试里如果你说：
 
-通常至少包含两层意思：
+> 很多 LLaVA-style 模型早期常直接接 CLIP ViT 视觉塔
 
-#### 1. 先学图文对齐
+这个方向是对的。
 
-目标是让视觉内容和语言描述进入相容的语义空间。
+#### 2. SigLIP 风格的 ViT visual tower
 
-这一步里常见的 supervision 包括：
+这类 encoder 本质上还是 ViT，但预训练目标从 CLIP 的 softmax 对比学习，换成了 sigmoid matching。
 
-- 图文对
-- 图像描述
-- 区域和短文本对应
-- 问答对
+特点通常是：
 
-#### 2. 再学视觉条件下的指令跟随
+- 视觉表征常更强
+- 对训练 batch 组织的依赖相对更弱
+- 近几年越来越常被拿来当 VLM 的视觉前端
 
-这一步更像 instruction tuning，只不过上下文里多了图像。
+#### 3. EVA / EVA-CLIP / InternViT 这类更强的大视觉 backbone
 
-模型会学：
+这类本质上还是大规模 ViT 路线，但参数量、分辨率和细节感知能力更强。
 
-- 先读视觉 token
-- 再结合用户问题
-- 最后按语言模型方式生成回答
+常见用途是：
 
-所以从训练视角看，VLM 不是一个单点技巧，而是：
+- 希望视觉底座更强
+- 希望 OCR、文档、细粒度感知能力更好
+- 希望高分辨率输入时保留更多视觉细节
 
-> 视觉表征、跨模态对齐和语言生成三件事叠在一起。
+#### 4. CNN / Swin / ConvNeXt 一类视觉 backbone
 
-### 5. 推理时，VLM 到底在做什么？
+也能用，但在通用 VLM 里没有 ViT 路线那么主流。
 
-它做的仍然是 next-token prediction。
+主要原因是：
 
-只是当前上下文不再只有文字，而是：
+- 现代 VLM 喜欢把视觉表示改写成 token 序列
+- ViT 天然更容易和 LLM 的 token 流对接
+
+#### 5. 视频或多图场景下的视觉 encoder
+
+当输入变成多图或视频时，常见做法是：
+
+- 逐帧用图像 encoder 编码
+- 再加 temporal module
+- 或者直接用视频视觉 backbone
+
+所以从大方向上看：
+
+> 通用 VLM 里最主流的 image encoder 仍然是 ViT 家族，只是预训练方法和规模不同。
+
+### 4. projector 一般是什么结构？
+
+projector 不是“顺手接一层线性层”那么简单，它至少要解决三件事：
+
+- 维度对齐：`vision_width -> d_model`
+- 分布对齐：视觉特征分布和 LLM embedding 分布通常不同
+- 语义桥接：让视觉 token 更像 LLM 能消费的上下文
+
+常见 projector 结构大致可以分成四类：
+
+#### 1. Linear projector
+
+最简单：
 
 ```text
-[visual tokens] + [prompt tokens]
+[B, N, vision_width] -> Linear -> [B, N, d_model]
 ```
 
-所以推理时的本质没有变：
+优点：
 
-- 前面先塞进图像对应的视觉 token
-- 再塞进问题文本
-- 模型按自回归方式一步一步生成答案
+- 参数少
+- 稳定
+- 容易训
 
-这也是为什么很多 VLM 的输出头，仍然就是普通 `lm_head`。
+适合：
 
-### 6. 为什么不把像素直接喂给 LLM？
+- 最小可跑链路
+- 先验证视觉桥接是否成立
 
-因为代价太高，效果通常也不好。
+#### 2. MLP projector
 
-主要问题有三个：
+比线性层多一点非线性变换，例如两层 MLP：
 
-- 图像分辨率很高，直接展平成 token 长度太大
-- 像素空间过于底层，LLM 不擅长直接从原始像素里学视觉归纳偏置
-- 训练成本会非常高
+```text
+Linear -> GELU -> Linear
+```
 
-所以更合理的路径是：
+优点是表达力更强，很多开源 VLM 都喜欢从这里起步。
 
-- 先用视觉模型提取局部和全局结构
-- 再把压缩后的语义特征交给 LLM
+#### 3. Q-Former / Cross-Attention bridge
 
-### 7. 多图和视频，为什么还能沿着这条路继续做？
+这类 projector 不只是改维度，而是主动“从视觉特征里查询有用信息”。
 
-因为从 LLM 的视角看，它最终只是在读一段更长的前缀。
+优点：
 
-多图时可以：
+- 更强
+- 更适合从大量视觉 token 里抽关键信息
 
-- 每张图分别编码，再拼接视觉 token
-- 插入图像分隔符 token
+代价：
 
-视频时可以：
+- 更重
+- 训练更复杂
 
-- 先做帧采样
-- 每帧做视觉编码
-- 再加时间位置编码或 temporal module
+#### 4. Resampler / Token Compression 模块
 
-所以很多视频 VLM 的本质仍然没有变，只是：
+这类 projector 会顺手做 token 压缩。
 
-> 前缀 token 从单张图像扩展成了“带时间结构的视觉 token 序列”。
+适合：
 
-## 面试高频问题
+- 高分辨率图像
+- 多图输入
+- 视频输入
 
-### 1. VLM 和纯 LLM 的根本差异是什么？
+因为这时真正痛的，不只是维度不匹配，而是：
 
-VLM 在 LLM 前面多了视觉编码和跨模态对齐步骤，让图像能被改写成 LLM 可以消费的 token 序列。
+> 视觉 token 太多，直接把上下文窗口和显存打爆了。
 
-### 2. 为什么 VLM 一般不是直接让 LLM 读像素？
-
-因为像素序列太长、过于底层、训练代价高，而且 LLM 本身没有视觉归纳偏置。
-
-### 3. projector 的作用是什么？
-
-把视觉特征映射到 LLM 的隐藏空间里，让视觉 token 和文本 token 能进入同一条计算图。
-
-### 4. VLM 推理时是不是还是 next-token prediction？
-
-是。区别只是上下文里除了文字，还多了视觉前缀 token。
-
-### 5. 为什么很多 VLM 喜欢冻结一部分视觉 encoder 或 LLM？
-
-因为两边都很大，先冻结大 backbone 再只训 projector 或少量适配层，更稳定也更省算力。
-
-### 6. 为什么高分辨率图像会让 VLM 很痛苦？
-
-因为视觉 token 数会迅速膨胀，直接挤占 LLM 的上下文窗口和显存预算。
-
-## 最小实现
+### 5. 结合代码看，VLM 的主干到底在做什么？
 
 完整代码见 [minimal_vlm_bridge.py](minimal_vlm_bridge.py)。
 
-下面这段骨架展示了最常见的 prefix-style VLM：
+下面这段代码，已经把 `image encoder -> projector -> LLM` 的主链路连起来了：
 
 ```python
 class TinyVLM(nn.Module):
-    def __init__(self, vocab_size, vision_width=64, d_model=128):
+    def __init__(
+        self,
+        vocab_size,
+        patch_size=16,
+        vision_width=64,
+        d_model=128,
+        num_heads=4,
+        num_layers=2,
+        max_len=512,
+        projector_type="mlp",
+    ):
         super().__init__()
-        self.vision_encoder = PatchEncoder(width=vision_width)
-        self.projector = MLPProjector(in_dim=vision_width, out_dim=d_model)
+        # 真实系统里这通常对应 CLIP / SigLIP / EVA / InternViT 之类的视觉塔。
+        self.vision_encoder = PatchEncoder(
+            in_channels=3,
+            patch_size=patch_size,
+            width=vision_width,
+        )
+
+        # projector 负责把视觉宽度桥接到 LLM 的隐藏维度。
+        self.projector = build_projector(
+            projector_type=projector_type,
+            in_dim=vision_width,
+            out_dim=d_model,
+        )
+
+        # 文本 token 走正常的语言模型嵌入。
         self.token_embedding = nn.Embedding(vocab_size, d_model)
-        self.decoder = nn.TransformerEncoder(...)
+        self.pos_embedding = nn.Embedding(max_len, d_model)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=num_heads,
+            dim_feedforward=d_model * 4,
+            batch_first=True,
+        )
+        self.decoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
 
-    def encode_image(self, images):
-        visual_tokens = self.vision_encoder(images)
-        return self.projector(visual_tokens)
-
     def forward(self, images, input_ids):
-        visual_tokens = self.encode_image(images)
+        # 1) 先把像素图像压成视觉 token。
+        visual_tokens = self.vision_encoder(images)
+
+        # 2) 再把视觉 token 映射到语言模型隐藏空间。
+        visual_tokens = self.projector(visual_tokens)
+
+        # 3) 文本 token 走普通 embedding。
         text_tokens = self.token_embedding(input_ids)
+
+        # 4) 把视觉 token 当成文本前缀，和文本拼到同一条序列里。
         x = torch.cat([visual_tokens, text_tokens], dim=1)
+
+        positions = torch.arange(x.shape[1], device=x.device).unsqueeze(0)
+        x = x + self.pos_embedding(positions)
+
+        # 5) 文本能看见全部视觉 token，但文本之间仍保持自回归 mask。
         mask = build_prefix_causal_mask(
             num_visual_tokens=visual_tokens.shape[1],
             num_text_tokens=text_tokens.shape[1],
             device=x.device,
         )
         x = self.decoder(x, mask=mask)
-        return self.lm_head(x[:, visual_tokens.shape[1] :])
+
+        # 6) 最后只取文本位置输出词表 logits。
+        text_hidden = x[:, visual_tokens.shape[1] :]
+        text_hidden = self.ln_f(text_hidden)
+        return self.lm_head(text_hidden)
 ```
 
-这段代码里最值得讲清楚的是：
+你要把这段代码一口气讲顺，最好按下面这个顺序：
 
-- `self.vision_encoder`：先把图像切成 patch 并提成视觉特征
-- `self.projector`：把视觉特征映射到 `d_model`
-- `torch.cat([visual_tokens, text_tokens], dim=1)`：把视觉 token 当成文本前缀
-- `build_prefix_causal_mask(...)`：让文本能看见全部视觉 token，同时保持文本自回归约束
-- `x[:, visual_tokens.shape[1] :]`：最终只对文本位置做语言建模输出
+- `self.vision_encoder`：把图像改写成视觉 token 序列
+- `self.projector`：把视觉宽度对齐到 LLM 隐藏维
+- `self.token_embedding`：把文本 id 变成文本 token
+- `torch.cat([visual_tokens, text_tokens], dim=1)`：把视觉 token 当作前缀条件
+- `build_prefix_causal_mask(...)`：保证文本能读取视觉，但文本生成仍是自回归
+- `x[:, visual_tokens.shape[1] :]`：最后只对文本位置做语言建模输出
+
+这也是 VLM 面试里最应该讲清楚的一件事：
+
+> `__init__` 决定你接了哪些桥，`forward` 决定视觉 token 如何一步一步变成语言模型的上下文。
+
+### 6. VLM 是怎么训出来的？
+
+通常至少有两层意思：
+
+#### 1. 图文对齐
+
+让视觉内容和语言内容进入相容的语义空间。
+
+#### 2. 视觉条件下的指令跟随
+
+让模型学会：
+
+- 先读视觉 token
+- 再读用户问题
+- 最后按 next-token prediction 生成回答
+
+所以从训练视角看，VLM 不是一个单点技巧，而是：
+
+> 视觉表征、跨模态桥接和语言生成三件事叠在一起。
+
+### 7. 多图和视频为什么还能沿着这条路继续做？
+
+因为从 LLM 的视角看，它最终读到的仍然是一段前缀 token。
+
+多图时可以：
+
+- 每张图各自编码
+- 插入分隔符 token
+- 再统一拼接
+
+视频时可以：
+
+- 先做帧采样
+- 每帧走 image encoder
+- 再引入时间位置编码、temporal module 或 token 压缩
+
+所以很多视频 VLM 的本质仍然没变，只是：
+
+> 前缀 token 从单张图像扩展成了带时间结构的视觉 token 序列。
+
+## 面试高频问题
+
+### 1. VLM 里常说的 CLIP encoder / SigLIP encoder，准确是什么意思？
+
+通常是指拿 CLIP / SigLIP 训练出来的视觉 tower 当 image encoder，用的往往还是 ViT 主干。
+
+### 2. 为什么现在很多通用 VLM 喜欢 ViT 家族视觉 encoder？
+
+因为它天然输出 token 序列，更容易和 LLM 的 token 流对接。
+
+### 3. projector 真的只是改维度吗？
+
+不是。弱 projector 看起来像改维度，强 projector 还承担分布对齐、语义桥接和 token 压缩。
+
+### 4. 为什么很多 VLM 喜欢先冻结 image encoder 或 LLM？
+
+因为两边都很大，先冻结大 backbone 只训桥接层，更稳定也更省算力。
+
+### 5. 为什么高分辨率图像会让 VLM 很痛苦？
+
+因为视觉 token 数暴涨，直接挤占上下文窗口和显存预算。
 
 ## 工程关注点
 
+- image encoder 选 CLIP、SigLIP，还是更强的 ViT 家族
+- projector 是线性层、MLP，还是更重的 Q-Former / Resampler
 - 视觉 token 数量和上下文长度怎么平衡
-- projector 是训线性层、MLP，还是更重的 Q-Former
-- 视觉 encoder 和 LLM 哪部分冻结，哪部分微调
-- 高分辨率、多图、长视频时怎么控显存
-- 训练数据里 OCR、表格、图表、定位类样本是否足够
+- 多图、视频、高分辨率输入如何压缩 token
+- OCR、表格、图表、grounding 类数据是否足够
 
 ## 常见坑点
 
-- 只会背“图像接到 LLM 前面”，但说不清中间为什么需要 projector
-- 说 VLM 学会视觉，是因为“LLM 参数够大”，忽略了视觉 encoder 的作用
-- 混淆“图文对齐”和“视觉问答指令微调”这两个训练阶段
-- 忽视视觉 token 数膨胀导致的上下文和显存问题
+- 把“CLIP / SigLIP”误说成具体 backbone 名，而不是图文预训练路线
+- 只会说“接个 projector”，却说不清 projector 解决了什么问题
+- 把 projector 讲成纯维度映射，忽略 token 压缩和语义桥接
+- 只会说结构，不会按代码顺序把 `__init__ -> forward` 讲通
 
 ## 面试时怎么讲
 
 比较稳的一种讲法是：
 
-> VLM 本质上是在 LLM 前面接了一套视觉前端。图像先被 vision encoder 编成视觉特征，再通过 projector 映射到 LLM 的隐藏空间，最后把这些视觉 token 当成前缀上下文，让 LLM 按 next-token prediction 的方式生成回答。所以它不是让 LLM 直接学像素，而是让 LLM 学会如何消费已经编码好的视觉语义。
+> VLM 本质上是在 LLM 前面接了一套视觉前端。常见 image encoder 大多是 ViT 家族，比如 CLIP 或 SigLIP 训练出来的视觉 tower；再往后通过 linear、MLP、Q-Former 或 resampler 这类 projector，把视觉特征桥接到 LLM 隐藏空间里。之后把视觉 token 当成前缀条件拼到文本前面，让语言模型按 next-token prediction 的方式生成回答。
 
 ## 延伸阅读
 

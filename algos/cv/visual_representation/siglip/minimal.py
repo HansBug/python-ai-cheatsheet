@@ -40,22 +40,39 @@ class TinySigLIP(nn.Module):
         self.text_encoder = SimpleTextEncoder(vocab_size=vocab_size, embed_dim=embed_dim)
         self.logit_scale = nn.Parameter(torch.tensor(1.0))
 
+    def encode_image(self, images):
+        return F.normalize(self.image_encoder(images), dim=-1)
+
+    def encode_text(self, token_ids):
+        return F.normalize(self.text_encoder(token_ids), dim=-1)
+
     def forward(self, images, token_ids):
-        image_features = F.normalize(self.image_encoder(images), dim=-1)
-        text_features = F.normalize(self.text_encoder(token_ids), dim=-1)
+        image_features = self.encode_image(images)
+        text_features = self.encode_text(token_ids)
         return self.logit_scale.exp() * image_features @ text_features.T
 
 
-def siglip_loss(logits):
-    target = torch.eye(logits.shape[0], device=logits.device)
-    return F.binary_cross_entropy_with_logits(logits, target)
+class SigLIPLoss(nn.Module):
+    def __init__(self, negative_weight=1.0):
+        super().__init__()
+        self.negative_weight = negative_weight
+
+    def forward(self, logits):
+        target = torch.eye(logits.shape[0], device=logits.device)
+        loss = F.binary_cross_entropy_with_logits(logits, target, reduction="none")
+
+        positive_mask = target == 1
+        negative_mask = ~positive_mask
+        weighted_loss = loss * positive_mask + self.negative_weight * loss * negative_mask
+        return weighted_loss.mean()
 
 
 if __name__ == "__main__":
     model = TinySigLIP(vocab_size=5000, embed_dim=128)
+    criterion = SigLIPLoss()
     images = torch.randn(4, 3, 224, 224)
     token_ids = torch.randint(0, 5000, (4, 16))
     logits = model(images, token_ids)
-    loss = siglip_loss(logits)
+    loss = criterion(logits)
     print("logits shape:", logits.shape)
     print("loss:", float(loss))

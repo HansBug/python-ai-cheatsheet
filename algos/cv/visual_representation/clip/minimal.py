@@ -51,21 +51,28 @@ class TinyCLIP(nn.Module):
     def forward(self, images, token_ids):
         image_features = self.encode_image(images)
         text_features = self.encode_text(token_ids)
-        return self.logit_scale.exp() * image_features @ text_features.T
+        logits_per_image = self.logit_scale.exp() * image_features @ text_features.T
+        logits_per_text = logits_per_image.T
+        return logits_per_image, logits_per_text
 
 
-def clip_loss(logits):
-    labels = torch.arange(logits.shape[0], device=logits.device)
-    image_to_text = F.cross_entropy(logits, labels)
-    text_to_image = F.cross_entropy(logits.T, labels)
-    return 0.5 * (image_to_text + text_to_image)
+class CLIPLoss(nn.Module):
+    def forward(self, logits_per_image, logits_per_text=None):
+        if logits_per_text is None:
+            logits_per_text = logits_per_image.T
+
+        labels = torch.arange(logits_per_image.shape[0], device=logits_per_image.device)
+        image_to_text = F.cross_entropy(logits_per_image, labels)
+        text_to_image = F.cross_entropy(logits_per_text, labels)
+        return 0.5 * (image_to_text + text_to_image)
 
 
 if __name__ == "__main__":
     model = TinyCLIP(vocab_size=5000, embed_dim=128)
+    criterion = CLIPLoss()
     images = torch.randn(4, 3, 224, 224)
     token_ids = torch.randint(0, 5000, (4, 16))
-    logits = model(images, token_ids)
-    loss = clip_loss(logits)
-    print("logits shape:", logits.shape)
+    logits_per_image, logits_per_text = model(images, token_ids)
+    loss = criterion(logits_per_image, logits_per_text)
+    print("logits_per_image shape:", logits_per_image.shape)
     print("loss:", float(loss))

@@ -2,9 +2,9 @@
 
 ## 当前已补内容
 
-- 视觉表征学习
-  - [CLIP](visual_representation/clip/README.md)
-  - [SigLIP](visual_representation/siglip/README.md)
+- [视觉表征学习](visual_representation/README.md)
+- [CLIP](visual_representation/clip/README.md)
+- [SigLIP](visual_representation/siglip/README.md)
 - OCR
   - [文本检测与文本识别基本链路](ocr/README.md)
 - 视频理解
