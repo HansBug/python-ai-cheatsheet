@@ -11,12 +11,12 @@
 这是一个专注于**AI 算法工程岗面试**的 Python 速查仓库。这里说的“算法”不是刷题里的哈希表、线段树那种题型模板，而是更偏：
 
 - 深度学习基础 / 训练机制
-- LLM / Transformer
-- CV / Detection / Segmentation / Diffusion / Perception
+- LLM / VLM / Transformer
+- CV / OCR / 视频理解 / Detection / Segmentation / Perception
 - 图形学 / 计算几何
 - C++ / Python 互操作 / OpenMP
 - CUDA / 算子 / 推理优化
-- 训练稳定性、并行策略、评测与工程落地
+- 数据工程 / 评测体系 / 训练稳定性 / 并行策略 / 工程落地
 
 这个仓库的目标不是堆概念，而是整理一套在面试里真正有用的资料组织方式：
 
@@ -67,7 +67,7 @@
 
 ```text
 python-ai-cheatsheet/
-├── algos/              # 算法方向专题内容
+├── algos/              # 算法方向专题内容，当前以平铺专题为主
 ├── tools/              # 本地辅助脚本、实验脚本、可视化脚本
 ├── README.md           # 项目说明
 ├── CLAUDE.md           # AI 协作与内容维护规范
@@ -75,6 +75,35 @@ python-ai-cheatsheet/
 ├── requirements.txt    # 本地实验依赖
 ├── .gitignore
 └── LICENSE
+```
+
+后续专题补齐时，目录规划会优先往下面这棵树靠拢：
+
+```text
+python-ai-cheatsheet/
+└── algos/
+    ├── llm/
+    │   ├── README.md
+    │   ├── minimal_*.py
+    │   └── paper_reading/
+    ├── vlm/
+    │   ├── README.md
+    │   ├── minimal_*.py
+    │   └── paper_reading/
+    ├── cv/
+    │   ├── README.md
+    │   ├── image_basics/
+    │   ├── visual_representation/
+    │   ├── ocr/
+    │   ├── video_understanding/
+    │   └── detection_segmentation/
+    ├── data_engineering/
+    │   ├── README.md
+    │   ├── data_cleaning/
+    │   ├── annotation_pipeline/
+    │   ├── synthetic_data/
+    │   └── evaluation/
+    └── ...
 ```
 
 ## 计划收录的内容
@@ -104,6 +133,17 @@ python-ai-cheatsheet/
     * [ ] LLaMA 系列
     * [ ] Qwen 系列
     * [ ] DeepSeek 系列
+* [ ] VLM 机制与模型
+  * [ ] VLM 总览：LLM 是怎么获得视觉能力的
+  * [ ] Vision Encoder + Projector + LLM 的基础拼接范式
+  * [ ] 视觉 token / patch / region 表示
+  * [ ] 多图输入、视频帧输入与分辨率扩展
+  * [ ] 主流开源 VLM 家族精读
+    * [ ] BLIP-2
+    * [ ] Flamingo
+    * [ ] LLaVA 系列
+    * [ ] Qwen-VL / Qwen2-VL 系列
+    * [ ] InternVL 系列
 * [ ] 训练机制与优化
   * [ ] Cross Entropy / Label Smoothing
   * [ ] Adam / AdamW
@@ -123,11 +163,15 @@ python-ai-cheatsheet/
   * [ ] 图像滤波 / 边缘检测
   * [ ] 特征点 / 描述子
   * [ ] 单应性 / RANSAC
+  * [ ] 对比学习 / 相似度学习基础
 * [ ] 深度学习CV
   * [x] [CNN 基础模块](algos/cnn_basics/README.md)
   * [x] [ResNet](algos/resnet/README.md)
   * [ ] UNet
   * [x] [YOLO](algos/yolo/README.md)
+  * [ ] 视觉表征学习
+    * [ ] CLIP
+    * [ ] SigLIP
   * [x] [Vision Transformer](algos/vision_transformer/README.md)
     * [ ] ViT
     * [ ] DeiT
@@ -136,7 +180,27 @@ python-ai-cheatsheet/
     * [ ] ConvNeXt
     * [ ] EVA / EVA-02
   * [ ] Detection Head
+  * [ ] 视觉定位 / Grounding
+  * [ ] OCR / 文档理解
+    * [ ] 文本检测与文本识别基本链路
+    * [ ] CTC 与 Attention-based OCR
+    * [ ] 版面分析 / 表格理解 / 图表理解
+  * [ ] 视频理解
+    * [ ] 视频表示与帧采样
+    * [ ] 2D CNN + Temporal Head / 3D CNN
+    * [ ] Video Transformer / TimeSformer
+    * [ ] 视频描述 / 视频问答
+    * [ ] Temporal Grounding / 长视频理解
   * [ ] Diffusion 基础
+* [ ] 数据工程与评测
+  * [ ] 数据获取 / 采样 / 去重
+  * [ ] 质量过滤 / 噪声清洗
+  * [ ] 标注体系设计 / 指南编写
+  * [ ] 自动标注 / AI 辅助标注
+  * [ ] 质检 / 一致性评估 / 仲裁机制
+  * [ ] 数据合成 / 实验模拟
+  * [ ] Benchmark / Eval Set 构建
+  * [ ] Slice Eval / Badcase 挖掘 / 数据闭环
 * [ ] 自动驾驶感知
   * [x] [相机模型 / 投影几何](algos/camera_projection/README.md)
   * [x] [多目标跟踪](algos/multi_object_tracking/README.md)
@@ -219,7 +283,7 @@ python-ai-cheatsheet/
 
 ## 当前状态
 
-目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[LLM 结构与推理流程](algos/llm/README.md)、[强化学习基础与发展沿革](algos/reinforcement_learning_basics/README.md)、[DQN](algos/dqn/README.md)、[PPO](algos/ppo/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md)、[YOLO](algos/yolo/README.md)、[Vision Transformer](algos/vision_transformer/README.md)、[相机模型 / 投影几何](algos/camera_projection/README.md)、[多目标跟踪](algos/multi_object_tracking/README.md)、[BEV 感知](algos/bev_perception/README.md)、[C++ 面向对象 / 多态](algos/cpp_oop/README.md)、[模板 / 泛型](algos/cpp_templates/README.md)、[OpenMP](algos/openmp/README.md)、[pybind11 / Python-C++ 互操作](algos/pybind11/README.md)、[任意多边形面积公式](algos/polygon_area/README.md) 和 [凸多边形相交判定与求交](algos/convex_polygon_intersection/README.md) 二十二篇专题内容。后续会继续补深度学习基础、CV 基础、深度学习 CV、LLM / Transformer、感知算法、图形学和 C++ 相关专题。
+目前已完成仓库基础骨架、文档规范和协作说明，并新增了 [Self-Attention / Multi-Head Attention](algos/self_attention/README.md)、[Positional Encoding / RoPE](algos/positional_encoding/README.md)、[LayerNorm / RMSNorm](algos/normalization/README.md)、[Encoder / Decoder 结构与区别](algos/encoder_decoder/README.md)、[最小完整 Transformer 实现](algos/transformer_minimal/README.md)、[LLM 结构与推理流程](algos/llm/README.md)、[强化学习基础与发展沿革](algos/reinforcement_learning_basics/README.md)、[DQN](algos/dqn/README.md)、[PPO](algos/ppo/README.md)、[CNN 基础模块](algos/cnn_basics/README.md)、[ResNet](algos/resnet/README.md)、[YOLO](algos/yolo/README.md)、[Vision Transformer](algos/vision_transformer/README.md)、[相机模型 / 投影几何](algos/camera_projection/README.md)、[多目标跟踪](algos/multi_object_tracking/README.md)、[BEV 感知](algos/bev_perception/README.md)、[C++ 面向对象 / 多态](algos/cpp_oop/README.md)、[模板 / 泛型](algos/cpp_templates/README.md)、[OpenMP](algos/openmp/README.md)、[pybind11 / Python-C++ 互操作](algos/pybind11/README.md)、[任意多边形面积公式](algos/polygon_area/README.md) 和 [凸多边形相交判定与求交](algos/convex_polygon_intersection/README.md) 二十二篇专题内容。后续会继续补深度学习基础、CV 与视觉理解、VLM、多模态数据工程、LLM / Transformer、感知算法、图形学和 C++ 相关专题。
 
 ## 许可证
 
