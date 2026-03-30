@@ -213,7 +213,46 @@ class SigLIPLoss(nn.Module):
 
 > SigLIP 提供了一个更直接的逐对匹配训练目标，通常对 batch 组织更友好，也经常能训出更强的视觉表示，但具体谁更强，仍然要看数据、模型和训练设置。
 
-### 8. CLIP 和 SigLIP 分别更适合做什么？
+### 8. 为什么说 SigLIP 更自然适合 zero-shot multi-label classification？
+
+这一点和它的训练目标直接相关。
+
+SigLIP 训练时不是在一整行候选文本里强行选一个唯一正确项，而是在学：
+
+> 这张图和这条文本描述，是否匹配。
+
+所以到了 zero-shot 多标签场景，如果我们把标签写成一组 prompt：
+
+```text
+"a photo containing a dog"
+"a photo containing a bicycle"
+"a photo containing a person"
+```
+
+更自然的推理方式就是：
+
+- 分别计算图像和每个 prompt 的匹配分数
+- 对每个分数单独做 sigmoid
+- 再按阈值判断这个标签是否存在
+
+这和 multi-label classification 的接口非常接近：
+
+- 每个标签都是独立判断
+- 可以同时有多个标签为真
+- 不要求多个标签之间概率和为 `1`
+
+所以 SigLIP 会让人觉得特别适合：
+
+- zero-shot multi-label classification
+- tag prediction
+- attribute prediction
+- 需要“每个标签独立打分”的图文匹配任务
+
+同样要强调，SigLIP 不是不能做单标签分类，而是：
+
+> 它的训练目标天然更像独立匹配判别，所以做 multi-label 时更顺手。
+
+### 9. CLIP 和 SigLIP 分别更适合做什么？
 
 下面这个对比很适合面试里直接讲：
 
@@ -222,14 +261,14 @@ class SigLIPLoss(nn.Module):
 | 训练目标 | 双向 softmax 排序 | 逐对 sigmoid 匹配 |
 | 对 batch 依赖 | 更强 | 相对更弱 |
 | 直觉 | 让正确项在一整行 / 一整列里胜出 | 给每个图文对打匹配分 |
-| 经典用途 | zero-shot 分类、检索、开放词表识别 | 同样能做 zero-shot / 检索，也常做更强视觉塔 |
+| 经典用途 | zero-shot single-label 分类、检索、开放词表识别 | zero-shot multi-label 分类、tagging、检索，也常做更强视觉塔 |
 | 工程味道 | 更像经典对比学习 | 更像 pairwise matching |
 
 如果要再往前推一步，可以这么说：
 
 #### CLIP 更适合
 
-- 经典 zero-shot 分类叙事
+- 经典 zero-shot single-label 分类叙事
 - 图文检索和开放词表识别的标准基线
 - 复用现有 CLIP 生态和 checkpoint
 
@@ -238,6 +277,7 @@ class SigLIPLoss(nn.Module):
 - 训练 batch 不想依赖过大规模时
 - 想做更强的视觉前端或 VLM 视觉塔时
 - 更偏“匹配分数学习”的图文表示训练
+- zero-shot multi-label classification 或 tag prediction
 
 #### 两者都不太适合单独解决
 
@@ -265,7 +305,15 @@ CLIP 训练的是批内排序竞争，SigLIP 训练的是逐对匹配判别。
 
 因为它不再依赖整行整列 softmax 归一化，训练目标对超大批次竞争的依赖相对更弱。
 
-### 4. SigLIP 一定比 CLIP 强吗？
+### 4. 为什么说 SigLIP 更自然适合 zero-shot multi-label classification？
+
+因为它对每个图文对都做独立的 sigmoid matching，所以每个标签可以单独阈值化，不要求标签之间互斥。
+
+### 5. SigLIP 能不能做单标签分类？
+
+能做，直接取分数最高的 prompt 也可以；只是从训练目标上看，它没有 CLIP 那么强的“候选类互斥竞争”味道。
+
+### 6. SigLIP 一定比 CLIP 强吗？
 
 不能这么讲。更稳的说法是它提供了另一种常常更有效的训练目标，但具体表现仍然要看模型、数据和 recipe。
 

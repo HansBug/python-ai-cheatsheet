@@ -193,11 +193,47 @@ class CLIPLoss(nn.Module):
 
 > 它学到的不是固定分类头，而是图像和自然语言之间的语义对齐。
 
-### 7. CLIP 适合做什么，不太适合做什么？
+### 7. 为什么说 CLIP 更自然适合 zero-shot single-label classification？
+
+这一点和它的训练目标直接相关。
+
+CLIP 训练时，本质上一直在学：
+
+> 给定一张图，在一组候选文本里把唯一正确项排到最前面。
+
+所以到了 zero-shot 分类时，如果我们把类别写成一组 prompt：
+
+```text
+"a photo of a cat"
+"a photo of a dog"
+"a photo of a car"
+```
+
+然后算图像和这些 prompt 的相似度，最自然的推理方式就是：
+
+- 对这组候选 prompt 的分数做 softmax
+- 取概率最大的那个类别
+
+这和普通单标签分类的接口几乎是同构的：
+
+- 仍然是一组互斥候选类
+- 仍然默认“最终只选一个最可能类别”
+
+所以 CLIP 会让人觉得特别适合 zero-shot classification，尤其是：
+
+- 单标签分类
+- 封闭类别集合上的开放词表替换
+- top-1 / top-k 预测
+
+但这里要注意，CLIP 不是完全不能做 multi-label，而是：
+
+> 它的训练目标天然更像“候选类之间彼此竞争”，所以做 zero-shot multi-label 时没有那么顺手。
+
+### 8. CLIP 适合做什么，不太适合做什么？
 
 #### 适合
 
-- zero-shot 分类
+- zero-shot single-label 分类
 - 图文检索
 - 开放词表识别
 - 作为 VLM 的视觉底座
@@ -231,7 +267,15 @@ class CLIPLoss(nn.Module):
 
 因为类别可以写成自然语言 prompt，分类可以改写成图像和候选文本描述的匹配。
 
-### 4. 为什么 `logit_scale` 很重要？
+### 4. 为什么说 CLIP 更自然适合 zero-shot single-label classification？
+
+因为它的训练目标本质上是在一组候选文本里选唯一正确项，这和单标签分类的互斥假设非常一致。
+
+### 5. CLIP 能不能做 multi-label？
+
+能做，但通常不如 SigLIP 那样自然。因为 CLIP 的分数更像“候选类之间的相对竞争结果”，不是天然独立的标签存在概率。
+
+### 6. 为什么 `logit_scale` 很重要？
 
 它控制 softmax 前相似度的温度，直接影响分布有多尖锐、训练是否稳定。
 
